@@ -1,0 +1,16 @@
+## visual studio
+.vs
+Plat.sln
+
+## unreal
+Binaries
+config
+Intermediate
+Plugins
+Saved
+Source/Plat.Target.cs
+Source/PlatEditor.Target.cs
+Plat.uproject
+
+## asset
+Content
