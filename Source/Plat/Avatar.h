@@ -3,6 +3,8 @@
 #pragma once
 
 #include "Plat.h"
+#include "CoreMinimal.h"
+#include "AvatarAnimInstance.h"
 #include "GameFramework/Character.h"
 #include "Avatar.generated.h"
 
@@ -15,7 +17,15 @@ private:
 	void LeftRight(float newAxisValue);
 	void LookUp(float newAxisValue);
 	void Turn(float newAxisValue);
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		bool isAttacking;
 	
+	UPROPERTY()
+		class UAvatarAnimInstance* ABAnim;
+
+	UFUNCTION()
+		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 protected:
 	virtual void BeginPlay() override;
@@ -26,9 +36,15 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void PostInitializeComponents() override;
+
+	void Attack();
 	
+	
+
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		USpringArmComponent* SpringArm;
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* Camera;
+	
 };

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Plat.h"
+#include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
 #include "AvatarAnimInstance.generated.h"
 
@@ -18,10 +19,18 @@ public:
 
 	virtual void NativeUpdateAnimation(float deltaSeconds) override;
 
+	void PlayAttackMontage();
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		float currentPawnSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		bool isInAir;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
+		bool isAttacking;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* AttackAnim;
 };

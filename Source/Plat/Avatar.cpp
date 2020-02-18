@@ -6,7 +6,7 @@
 // Sets default values
 AAvatar::AAvatar() {
  	PrimaryActorTick.bCanEverTick = true;
-	
+	isAttacking = false;
 
 	// init..
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
@@ -25,8 +25,14 @@ AAvatar::AAvatar() {
 	if (SK_Avatar.Succeeded()) 
 		GetMesh()->SetSkeletalMesh(SK_Avatar.Object);
 
+	// anim allocate..
+	static ConstructorHelpers::FClassFinder<UAnimInstance> AVATAR_ANIM(
+		TEXT("/Game/resources/character/AvatarAnimBlueprint.AvatarAnimBlueprint_C"));
+	if (AVATAR_ANIM.Succeeded())
+		GetMesh()->SetAnimInstanceClass(AVATAR_ANIM.Class);
+
 	// jump..
-	GetCharacterMovement()->JumpZVelocity = 800.0f;
+	GetCharacterMovement()->JumpZVelocity = 600.0f;
 
 	// view..
 	SetControlMode(0);
@@ -48,6 +54,17 @@ void AAvatar::Turn(float newAxisValue) {
 	AddControllerYawInput(newAxisValue);
 }
 
+void AAvatar::Attack() {
+	if (isAttacking) return;
+
+	ABAnim->PlayAttackMontage();
+	isAttacking = true;
+}
+
+void AAvatar::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted) {
+	isAttacking = false;
+}
+
 void AAvatar::BeginPlay() {
 	Super::BeginPlay();
 }
@@ -61,6 +78,10 @@ void AAvatar::SetControlMode(int32 controlMode) {
 	SpringArm->bDoCollisionTest = true;
 	SpringArm->bInheritYaw = true;
 	bUseControllerRotationYaw = false;
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 }
 
 // Called every frame
@@ -73,10 +94,18 @@ void AAvatar::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &AAvatar::Jump);
+	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AAvatar::Attack);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &AAvatar::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &AAvatar::LeftRight);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AAvatar::LookUp);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &AAvatar::Turn);
+}
+
+void AAvatar::PostInitializeComponents() {
+	Super::PostInitializeComponents();
+
+	ABAnim = Cast<UAvatarAnimInstance>(GetMesh()->GetAnimInstance());
+	ABAnim->OnMontageEnded.AddDynamic(this, &AAvatar::OnAttackMontageEnded);
 }
 
