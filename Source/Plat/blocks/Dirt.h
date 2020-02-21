@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Plat.h"
-#include "CoreMinimal.h"
+#include "BlockStatComponent.h"
 #include "GameFramework/Actor.h"
 #include "Dirt.generated.h"
 
@@ -16,6 +16,7 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 	virtual void PostInitializeComponents() override;
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -23,4 +24,7 @@ protected:
 public:	
 	UPROPERTY(VisibleAnywhere)
 		UStaticMeshComponent* Block;
+
+	UPROPERTY(VisibleAnywhere, Category = Stat)
+		class UBlockStatComponent* BlockStat;
 };

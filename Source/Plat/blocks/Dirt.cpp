@@ -12,27 +12,41 @@ ADirt::ADirt() {
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_BLOCK(
 		TEXT("/Game/resources/blocks/dirt.dirt"));
-	
+	BlockStat = CreateDefaultSubobject<UBlockStatComponent>(TEXT("BLOCKSTAT"));
+
+
+
 	if (SM_BLOCK.Succeeded())
 		Block->SetStaticMesh(SM_BLOCK.Object);
 
-}
-
-// Called when the game starts or when spawned
-void ADirt::BeginPlay()
-{
-	Super::BeginPlay();
 	
+	Block->SetCollisionProfileName(TEXT("Block"));
 }
 
-// Called every frame
-void ADirt::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
+void ADirt::BeginPlay() {
+	Super::BeginPlay();	
+}
 
+
+void ADirt::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
 }
 
 void ADirt::PostInitializeComponents() {
 	Super::PostInitializeComponents();
+
+	BlockStat->OnHPIsZero.AddLambda([this]()->void {
+		//ABLOG(Warning, TEXT("OnHPIsZero"));
+		SetActorEnableCollision(false);
+		Destroy();
+		});
+}
+
+float ADirt::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
+	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	ABLOG(Warning, TEXT("DIRT_BLOCK Took Damage"));
+
+	BlockStat->SetDamage(FinalDamage);
+	return FinalDamage;
 }
 
