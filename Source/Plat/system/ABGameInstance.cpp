@@ -5,8 +5,16 @@
 
 UABGameInstance::UABGameInstance() {}
 
+
+
 void UABGameInstance::Init() {
 	Super::Init();
+}
+
+// 500 200 200
+void UABGameInstance::CreateWorld() {
+
+
 }
 
 FBlockData* UABGameInstance::GetBlockData() {

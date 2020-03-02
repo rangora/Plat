@@ -27,7 +27,8 @@ class PLAT_API UABGameInstance : public UGameInstance {
 
 public:
 	UABGameInstance();
-	void Init();
+	void Init() override;
+	void CreateWorld();
+
 	FBlockData* GetBlockData();
-	
 };

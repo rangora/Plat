@@ -6,14 +6,17 @@
 #include "CoreMinimal.h"
 #include "AvatarAnimInstance.h"
 #include "GameFramework/Character.h"
+#include "Components/WidgetComponent.h"
+#include "Components/TimelineComponent.h"
+#include "Components/BoxComponent.h"
 #include "Avatar.generated.h"
+
 
 UCLASS()
 class PLAT_API AAvatar : public ACharacter {
 	GENERATED_BODY()
 
 private:
-	float attackPower;
 	// Control..
 	void UpDown(float newAxisValue);
 	void LeftRight(float newAxisValue);
@@ -21,6 +24,15 @@ private:
 	void Turn(float newAxisValue);
 
 	void AttackCheck();
+
+	float attackPower;
+
+	// for UI..
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", Meta = (AllowPrivateAccess = true))
+	float healthValue;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", Meta = (AllowPrivateAccess = true))
+	float moodValue;
 
 	// for attack function..
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
@@ -50,11 +62,15 @@ public:
 	virtual void PostInitializeComponents() override;
 
 	void Attack();
-	
-	
+	void ShowInventory();
+		
 
+	UPROPERTY(VisibleAnywhere, Category = UI)
+		class UWidgetComponent* HPBarWidget;
+	
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		USpringArmComponent* SpringArm;
+	
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* Camera;
 	

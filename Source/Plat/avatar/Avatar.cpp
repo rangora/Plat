@@ -10,19 +10,25 @@ AAvatar::AAvatar() {
 	AttackRange = 200.;
 	AttackRadius = 50.;
 	attackPower = 50.;
-
+	healthValue = 1.0;
+	moodValue = 0.25;
 
 	// init..
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
+	HPBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HPBARWIDGET"));
+
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Avatar"));
+	HPBarWidget->SetupAttachment(GetMesh());
 
 	// place..
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
 	SpringArm->TargetArmLength = 400.0f;
 	SpringArm->SetRelativeRotation(FRotator(-15.0f, 0.0f, 0.0f));
+	HPBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 250.0f));
+	HPBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
 
 	// actor allocate..
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Avatar(
@@ -35,6 +41,14 @@ AAvatar::AAvatar() {
 		TEXT("/Game/resources/character/AvatarAnimBlueprint.AvatarAnimBlueprint_C"));
 	if (AVATAR_ANIM.Succeeded())
 		GetMesh()->SetAnimInstanceClass(AVATAR_ANIM.Class);
+
+	// UI allocate..
+	static ConstructorHelpers::FClassFinder<UUserWidget> UI_HUD(
+		TEXT("/Game/UMG/GameHUD.GameHUD_C"));
+	if (UI_HUD.Succeeded()) {
+		HPBarWidget->SetWidgetClass(UI_HUD.Class);
+		HPBarWidget->SetDrawSize(FVector2D(150.0f, 50.0f));
+	}
 
 	// jump..
 	GetCharacterMovement()->JumpZVelocity = 600.0f;
@@ -79,7 +93,7 @@ void AAvatar::AttackCheck() {
 		
 		FDamageEvent DamageEvent;
 		HitResult.Actor->TakeDamage(attackPower, DamageEvent, GetController(), this);
-	
+		this->healthValue -= 0.1f;
 	}
 
 }
@@ -91,6 +105,10 @@ void AAvatar::Attack() {
 	isAttacking = true;
 
 	AttackCheck();
+}
+
+void AAvatar::ShowInventory() {
+
 }
 
 void AAvatar::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted) {
@@ -127,7 +145,7 @@ void AAvatar::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &AAvatar::Jump);
 	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AAvatar::Attack);
-
+	
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &AAvatar::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &AAvatar::LeftRight);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &AAvatar::LookUp);
@@ -139,6 +157,5 @@ void AAvatar::PostInitializeComponents() {
 
 	ABAnim = Cast<UAvatarAnimInstance>(GetMesh()->GetAnimInstance());
 	ABAnim->OnMontageEnded.AddDynamic(this, &AAvatar::OnAttackMontageEnded);
-
 }
 

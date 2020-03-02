@@ -15,6 +15,9 @@ class PLAT_API AABGameModeBase : public AGameModeBase {
 
 	AABGameModeBase();
 
+private:
+	virtual void BeginPlay() override;
+
 public:
 	virtual void PostLogin(APlayerController* newPlayer) override;
 };
