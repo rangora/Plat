@@ -9,8 +9,8 @@
 #include "WorldCreater.generated.h"
 
 
-#define MAPWIDTH  70
-#define MAPHEIGHT 70
+#define MAPWIDTH  128
+#define MAPHEIGHT 128
 #define STEP 100
 
 
@@ -21,12 +21,13 @@ class PLAT_API AWorldCreater : public AActor {
 private:
 	float* fNoiseSeed2D = nullptr;
 	float* fPerlinNoise2D = nullptr;
-	float _scalingBias = 2.0f;
-	int _octaves = 7;
+	float _scalingBias = 2.2f;
+	int _octaves = 8;
 	int* _y = nullptr;
 
 
 	void PerlinNoise2D(int nWidth, int nHeight, float* fSeed, int nOctaves, float fBias, float* fOutput);
+	void similar_k_means();
 
 public:	
 	FVector _Position;

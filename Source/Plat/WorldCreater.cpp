@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
+#include <iostream>
+#include <algorithm>
 #include "WorldCreater.h"
 
 void AWorldCreater::PerlinNoise2D(int nWidth, int nHeight, float* fSeed, int nOctaves, float fBias, float* fOutput) {
@@ -29,7 +30,34 @@ void AWorldCreater::PerlinNoise2D(int nWidth, int nHeight, float* fSeed, int nOc
                 fScaleAcc += fScale;
                 fScale = fScale / fBias;
             }
-            fOutput[y * nWidth + x] = fNoise / fScaleAcc;
+            fOutput[x * nWidth + y] = fNoise / fScaleAcc;
+        }
+    }
+}
+
+void AWorldCreater::similar_k_means() {
+    int index{};
+    for (int i = 0; i < MAPWIDTH; i++) {
+        for (int j = 0; j < MAPHEIGHT; j++) {
+            int sum{};
+
+            index = i * MAPWIDTH + j;
+
+            // boundary check..
+            if ((index - MAPWIDTH) < 0 ||
+                (index + MAPWIDTH) > MAPWIDTH * MAPHEIGHT ||
+                (index % 70) == 0 ||
+                (index % 69) == 0) continue;
+
+
+            sum += _y[index] - _y[index - MAPWIDTH - 1] + _y[index] - _y[index - MAPWIDTH] + _y[index] - _y[index - MAPWIDTH + 1] +
+                _y[index] - _y[index - 1] + _y[index] - _y[index + 1] +
+                _y[index] - _y[index + MAPWIDTH - 1] + _y[index] - _y[index + MAPWIDTH] + _y[index] - _y[index + MAPWIDTH + 1];
+
+            if (abs(sum) >= 5) {
+                if (sum) _y[index]--;
+                else    _y[index]++;
+            }
         }
     }
 }
@@ -40,33 +68,25 @@ AWorldCreater::AWorldCreater() {
 	_Position = FVector::ZeroVector;
 	DirtBlocks = ADirt::StaticClass();
 	EarthBlocks = AEarth::StaticClass();
-	
 
 	// random Seed..
 	fNoiseSeed2D = new float[MAPWIDTH * MAPHEIGHT];
 	fPerlinNoise2D = new float[MAPWIDTH * MAPHEIGHT];
 	_y = new int[MAPWIDTH * MAPHEIGHT];
 
-	for (int i = 0; i < MAPWIDTH * MAPHEIGHT; i++)
-		fNoiseSeed2D[i] = FMath::RandRange(0.0f, 1.0f);
+    std::fill_n(_y, MAPWIDTH * MAPHEIGHT, 1);
 
-    UE_LOG(LogTemp, Warning, TEXT("Seed done"));
-
-    PerlinNoise2D(MAPWIDTH, MAPHEIGHT, fNoiseSeed2D, _octaves, _scalingBias, fPerlinNoise2D);
-    
-    UE_LOG(LogTemp, Warning, TEXT("Noise done"));
-    
-    for (int i = 0; i < MAPWIDTH; i++) {
-        for (int j = 0; j < MAPHEIGHT; j++)
-            _y[i * MAPWIDTH + j] = (((fPerlinNoise2D[MAPWIDTH * i + j] * MAPWIDTH / 2.0f) + MAPWIDTH / 2.0f)) / 5.0f;
+    for (int i = 0; i < MAPWIDTH * MAPHEIGHT; i++) {
+        fNoiseSeed2D[i] = FMath::FRandRange(0.0f, 1.0f);
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("_y done"));
-    UE_LOG(LogTemp, Warning, TEXT("%f"), fPerlinNoise2D[0]);
-    UE_LOG(LogTemp, Warning, TEXT("%d"), _y[0]);
-    UE_LOG(LogTemp, Warning, TEXT("%f"), fPerlinNoise2D[1]);
-    UE_LOG(LogTemp, Warning, TEXT("%d"), _y[1]);
-    
+    PerlinNoise2D(MAPWIDTH, MAPHEIGHT, fNoiseSeed2D, _octaves, _scalingBias, fPerlinNoise2D);
+
+    for (int i = 0; i < MAPWIDTH; i++) {
+        for (int j = 0; j < MAPHEIGHT; j++) {
+            _y[i * MAPWIDTH + j] += (int)(fPerlinNoise2D[i * MAPWIDTH + j] * 1000.0f / 20.0f);
+        }
+    }
 }
 
 
@@ -74,20 +94,15 @@ void AWorldCreater::CreateHeight(FVector position, int height) {
     if (height > 60) {
         UE_LOG(LogTemp, Warning, TEXT("if over 60.."));
         height = 60;
-    }
-
-	for (int i = 0; i < height - 1; i++) {
-		GetWorld()->SpawnActor<ADirt>(DirtBlocks,
-			position + FVector(0.f, 0.f, 100.f * i), FRotator::ZeroRotator);
-	}
-	GetWorld()->SpawnActor<AEarth>(EarthBlocks,
+    }   
+    GetWorld()->SpawnActor<AEarth>(EarthBlocks,
 		position + FVector(0.f, 0.f, 100.f * (height - 1)), FRotator::ZeroRotator);
 }
 
 void AWorldCreater::BeginPlay() {
 	Super::BeginPlay();
 	
-    //CreateHeight(_Position, _y[0]);
+    //similar_k_means();
     for (int i = 0; i < MAPWIDTH; i++) {
         for (int j = 0; j < MAPHEIGHT; j++) {
             CreateHeight(_Position, _y[i * MAPWIDTH + j]);
