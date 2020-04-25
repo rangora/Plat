@@ -4,17 +4,17 @@
 
 #include "Plat.h"
 #include "Blueprint/UserWidget.h"
-#include "UI/InventorySlot.h"
-#include "item/InventoryItem.h"
-#include "system/AvatarController.h"
-#include "system/SandBoxState.h"
+#include "UI/BaseUI.h"
 #include "PlayerInventory.generated.h"
 
 /**
  *
  */
+
+class UInventorySlot;
+
 UCLASS()
-class PLAT_API UPlayerInventory : public UUserWidget {
+class PLAT_API UPlayerInventory : public UBaseUI {
 	GENERATED_BODY()
 
 public:
@@ -32,14 +32,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 		int FindEmptySlot();
 
-	bool RefreshQuickSlots(APlayerController* Controller);
+	bool RefreshQuickSlots();
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray<class UInventorySlot*> Slots;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TSubclassOf<class UInventorySlot> DragImageClass;
+		TSubclassOf<class UInventorySlot> SlotClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		int SlotSize;

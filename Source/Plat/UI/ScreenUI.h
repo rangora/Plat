@@ -2,9 +2,8 @@
 
 #pragma once
 
-#include "Plat.h"
 #include "Blueprint/UserWidget.h"
-#include "avatar/Avatar.h"
+#include "UI/BaseUI.h"
 #include "UI/QuickSlot.h"
 #include "ScreenUI.generated.h"
 
@@ -12,7 +11,7 @@
  * 
  */
 UCLASS()
-class PLAT_API UScreenUI : public UUserWidget {
+class PLAT_API UScreenUI : public UBaseUI {
 	GENERATED_BODY()
 
 public:
@@ -20,18 +19,17 @@ public:
 
 	virtual void NativeConstruct() override;
 
-	UFUNCTION(BlueprintImplementableEvent)
-	void InitQuickSlots();
-
 	void LinkSlot(int index, class UInventorySlot* Slot);
-
-	int GetUsingIndex();
 	void SetUsingIndex(int index);
+	int GetUsingIndex();
+
+	UFUNCTION(BlueprintImplementableEvent)
+		void InitQuickSlots();
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 		TArray<class UQuickSlot*> QuickSlots;
-	//AAvatar* PlayerAvatar;
+
 private:
 	int SlotSize;
 

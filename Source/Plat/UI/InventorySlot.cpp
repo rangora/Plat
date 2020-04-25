@@ -1,10 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "InventorySlot.h"
+#include "avatar/Avatar.h"
+#include "system/AvatarController.h"
+#include "item/InventoryItem.h"
+
 
 UInventorySlot::UInventorySlot(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer) {
-	
 	Allocatable = true;
 	Count = -1;
 	Index = -1;
@@ -22,6 +25,7 @@ void UInventorySlot::ChangeItemCount(int num) {
 }
 
 void UInventorySlot::Refresh() {
+	Super::Refresh();
 	if (Count > 1) {
 		ItemCount->SetVisibility(ESlateVisibility::Visible);
 	}
@@ -35,9 +39,7 @@ void UInventorySlot::Refresh() {
 }
 
 bool UInventorySlot::UseItem() {
-	EItemType Type = ItemData.Type;
-
-	switch (Type) {
+	switch (ItemData.Type) {
 	case EItemType::NONE:
 		return false;
 
@@ -56,9 +58,6 @@ bool UInventorySlot::UseItem() {
 	}
 	
 	if (Count == 0) {
-		auto IPlayer = Cast<AAvatar>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-		auto IController = Cast<AAvatarController>(IPlayer->GetController());
-		
 		if (IPlayer->Weapon)
 			IPlayer->Weapon->Destroy();
 
@@ -75,13 +74,11 @@ void UInventorySlot::NativeOnDragDetected(const FGeometry& InGeometry, const FPo
 		UDragDropSlot* oper = NewObject<UDragDropSlot>();
 		oper->From = this;
 		OutOperation = oper;
-
 	
 		if (DragImageWidget) {
 			DragImageWidget->ItemData.Thumbnail = this->ItemData.Thumbnail;
 			DragImageWidget->Allocatable = false;
 			oper->DefaultDragVisual = DragImageWidget;
-
 		}	
 	}
 }
@@ -98,9 +95,6 @@ bool UInventorySlot::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
 		FString::Printf(TEXT("Drag end at %d index"), this->Index));
 
-	auto ICharacter = Cast<AAvatar>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	auto IController = Cast<AAvatarController>(ICharacter->GetController());
-
 	int slot1 = oper->From->Index;
 	int slot2 = this->Index;
 	int usingIndex = IController->ScreenUIWidget->GetUsingIndex();
@@ -111,15 +105,15 @@ bool UInventorySlot::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 	// If there are any swap slots that bind with quick slot, refresh it.
 	if ((QUICKSTART <= slot1 && slot1 <= QUICKEND) ||
 		(QUICKSTART <= slot2 && slot2 <= QUICKEND)) {
-		IController->PlayerInventoryWidget->RefreshQuickSlots(IController);
+		IController->PlayerInventoryWidget->RefreshQuickSlots();
 	}
 
 	// If player use a item in the swapped slot.
 	if (slot1 == usingIndex + QUICKSTART || slot2 == usingIndex + QUICKSTART) {
-		if (ICharacter->Weapon != nullptr) {
+		if (IPlayer->Weapon != nullptr) {
 			IController->ScreenUIWidget->SetUsingIndex(-1);
-			ICharacter->Weapon->Destroy();
-			ICharacter->Weapon = nullptr;
+			IPlayer->Weapon->Destroy();
+			IPlayer->Weapon = nullptr;
 		}
 	}
 

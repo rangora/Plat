@@ -5,12 +5,9 @@
 #include "Plat.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
-#include "system/AvatarController.h"
 #include "item/InventoryItem.h"
-#include "avatar/Avatar.h"
-#include "Components/Image.h"
+#include "UI/BaseSlot.h"
 #include "UI/DragDropSlot.h"
-#include "Components/TextBlock.h"
 #include "InventorySlot.generated.h"
 
 
@@ -23,16 +20,20 @@
 
 
 UCLASS()
-class PLAT_API UInventorySlot : public UUserWidget {
+class PLAT_API UInventorySlot : public UBaseSlot {
 	GENERATED_BODY()
 
 public:
 	UInventorySlot(const FObjectInitializer& ObjectInitializer);
 
-	virtual void NativeConstruct() override;
-
 	void ChangeItemCount(int num);
+	//UFUNCTION(BlueprintCallable)
+	bool SetNewItem(FInventoryItem NewItem);
 
+	virtual void NativeConstruct() override;
+	virtual bool UseItem() override;
+	virtual void Refresh() override;
+	
 	void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 	
 	/* Call when you deteched the button and Outoperation should be not nullptr. */
@@ -40,31 +41,9 @@ public:
 	FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
-	UFUNCTION(BlueprintCallable)
-		bool SetNewItem(FInventoryItem NewItem);
-
-	void Refresh();
-
-	bool UseItem();
-
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool Allocatable;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int Count;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int Index; // Allocated in InitInventory()
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UTextBlock* ItemCount;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UImage* ThumbnailImage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FInventoryItem ItemData;
+		int Index; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UInventorySlot* DragImageWidget;

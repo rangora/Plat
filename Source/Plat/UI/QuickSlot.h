@@ -4,45 +4,30 @@
 
 #include "Plat.h"
 #include "Blueprint/UserWidget.h"
-#include "avatar/Avatar.h"
-#include "item/InventoryItem.h"
-#include "Components/TextBlock.h"
-#include "Components/Image.h"
-#include "ui/InventorySlot.h"
+#include "UI/BaseSlot.h"
+#include "UI/InventorySlot.h"
 #include "QuickSlot.generated.h"
 
-/** Only have 12 ~ 15 index.
- * 
- */
+
 UCLASS()
-class PLAT_API UQuickSlot : public UUserWidget {
+class PLAT_API UQuickSlot : public UBaseSlot {
 	GENERATED_BODY()
 
 public:
 	UQuickSlot(const FObjectInitializer& ObjectInitializer);
 
 	virtual void NativeConstruct() override;
-
+	virtual void Refresh() override;
+	virtual bool UseItem() override;
+	
 	void InitQuickSlots(class UInventorySlot* Slot);
-
-	void Refresh();
-
-	void UseItem();
-
 	void ShowBorder(bool isInUsed);
-
+	
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
+	UPROPERTY(VisibleAnywhere, meta = (BindWidget))
 		UImage* Border;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UTextBlock* ItemCount;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
-		UImage* ThumbnailImage;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(VisibleAnywhere)
 		UInventorySlot* LinkedSlot;
 
-private:
 };

@@ -36,12 +36,12 @@ void UQuickSlot::Refresh() {
 
 }
 
-void UQuickSlot::UseItem() {
+bool UQuickSlot::UseItem() {
 	if (LinkedSlot->UseItem()) {
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-			FString::Printf(TEXT("QuickSlot USE..")));
 		Refresh();
+		return true;
 	}
+	return false;
 }
 
 void UQuickSlot::ShowBorder(bool isInUsed) {
