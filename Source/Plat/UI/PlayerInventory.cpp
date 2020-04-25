@@ -1,6 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerInventory.h"
+#include "item/InventoryItem.h"
+#include "system/AvatarController.h"
+#include "system/SandBoxState.h"
 
 UPlayerInventory::UPlayerInventory(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer) {
@@ -10,7 +13,7 @@ UPlayerInventory::UPlayerInventory(const FObjectInitializer& ObjectInitializer)
 		TEXT("/Game/UMG/BP_InventorySlot.BP_InventorySlot_C"));
 
 	if (UI_SLOT_C.Succeeded())
-		DragImageClass = UI_SLOT_C.Class;
+		SlotClass = UI_SLOT_C.Class;
 }
 
 void UPlayerInventory::NativeConstruct() {
@@ -62,8 +65,8 @@ int UPlayerInventory::FindEmptySlot() {
 	return -1;
 }
 
-bool UPlayerInventory::RefreshQuickSlots(APlayerController* Controller) {
-	auto IController = Cast<AAvatarController>(Controller);
+bool UPlayerInventory::RefreshQuickSlots() {
+	//auto IController = Cast<AAvatarController>(Controller);
 	int slotSize = IController->ScreenUIWidget->QuickSlots.Num();
 	if (slotSize) {
 		IController->ScreenUIWidget->QuickSlots[0]->Refresh();

@@ -7,18 +7,19 @@ UQuickSlot::UQuickSlot(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer) {
 }
 
+void UQuickSlot::NativeConstruct() {
+	Super::NativeConstruct();
+}
+
 void UQuickSlot::InitQuickSlots(UInventorySlot* Slot) {
-	if (IsValid(Slot)) {
-		LinkedSlot = Slot;
-		PointedItem.Thumbnail = LinkedSlot->ItemData.Thumbnail;
-		ItemCount->SetVisibility(ESlateVisibility::Hidden);
-		Border->SetVisibility(ESlateVisibility::Hidden);
+	LinkedSlot = Slot;
+	if (IsValid(LinkedSlot)) {
+		Refresh();
 	}
 }
 
 void UQuickSlot::Refresh() {
 	if (IsValid(LinkedSlot)) {
-		PointedItem.Thumbnail = LinkedSlot->ItemData.Thumbnail;
 		ItemCount->SetText(FText::FromString(FString::FromInt(LinkedSlot->Count)));
 		if (LinkedSlot->Count > 1) {
 			ItemCount->SetVisibility(ESlateVisibility::Visible);
@@ -27,19 +28,20 @@ void UQuickSlot::Refresh() {
 			ItemCount->SetVisibility(ESlateVisibility::Hidden);
 		// If the item is out of order.
 		else {
-			PointedItem.Clear();
 			ItemCount->SetVisibility(ESlateVisibility::Hidden);
 			ShowBorder(false);
 		}
+		ThumbnailImage->SetBrushFromTexture(LinkedSlot->ItemData.Thumbnail);
 	}
+
 }
 
-void UQuickSlot::UseItem() {
+bool UQuickSlot::UseItem() {
 	if (LinkedSlot->UseItem()) {
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-			FString::Printf(TEXT("QuickSlot USE..")));
 		Refresh();
+		return true;
 	}
+	return false;
 }
 
 void UQuickSlot::ShowBorder(bool isInUsed) {

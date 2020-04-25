@@ -8,9 +8,10 @@ config
 Intermediate
 Plugins
 Saved
-Source/Plat.Target.cs
-Source/PlatEditor.Target.cs
 Build
 
 ## asset
-Content
+Content/Collections
+Content/Developers
+Content/resources
+

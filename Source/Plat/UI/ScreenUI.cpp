@@ -12,9 +12,6 @@ UScreenUI::UScreenUI(const FObjectInitializer& ObjectInitializer)
 void UScreenUI::LinkSlot(int index, UInventorySlot* Slot) {
 	if (IsValid(QuickSlots[index]) && IsValid(Slot))
 		QuickSlots[index]->InitQuickSlots(Slot);
-	else
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-			FString::Printf(TEXT("%d didn't init"), index));
 }
 
 int UScreenUI::GetUsingIndex() {
