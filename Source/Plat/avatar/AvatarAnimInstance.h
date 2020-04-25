@@ -8,7 +8,7 @@
 #include "AvatarAnimInstance.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class PLAT_API UAvatarAnimInstance : public UAnimInstance {

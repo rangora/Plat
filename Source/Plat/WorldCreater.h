@@ -3,46 +3,45 @@
 #pragma once
 
 #include "Plat.h"
-#include "blocks/Dirt.h"
-#include "blocks/Earth.h"
+#include "blocks/BasicBlock.h"
 #include "GameFramework/Actor.h"
 #include "WorldCreater.generated.h"
-
 
 #define MAPWIDTH  128
 #define MAPHEIGHT 128
 #define STEP 100
 
-
 UCLASS()
 class PLAT_API AWorldCreater : public AActor {
 	GENERATED_BODY()
-	
-private:
-	float* fNoiseSeed2D = nullptr;
-	float* fPerlinNoise2D = nullptr;
-	float _scalingBias = 2.2f;
-	int _octaves = 8;
-	int* _y = nullptr;
 
-
-	void PerlinNoise2D(int nWidth, int nHeight, float* fSeed, int nOctaves, float fBias, float* fOutput);
-	void similar_k_means();
-
-public:	
-	FVector _Position;
-
+public:
 	AWorldCreater();
 	void CreateHeight(FVector position, int height);
-
-protected:
 	virtual void BeginPlay() override;
 
-public:	
-	virtual void Tick(float DeltaTime) override;
+private:	
+	float fade(float t);
+	float lerp(float t, float a, float b);
+	float grad(int hash, float x, float y, float z);
+	float noise(float x, float y);
+	int octave(int x, int y);
 
-	UPROPERTY(EditInstanceOnly)
-		TSubclassOf<class ADirt> DirtBlocks;
-	UPROPERTY(EditInstanceOnly)
-		TSubclassOf<class AEarth> EarthBlocks;
+	void similar_k_means();	
+
+public:
+	FVector _Position;
+
+private:
+	float _scalingBias = 1.8f;
+	int _octaves = 8;
+	int* _y = nullptr;
+	int _s[512];
+
+	//UPROPERTY(EditInstanceOnly)
+	//	TSubclassOf<class ABlock> Blocks;
+	//UPROPERTY(EditInstanceOnly)
+	//	TSubclassOf<class ADirt> DirtBlocks;
+	//UPROPERTY(EditInstanceOnly)
+	//	TSubclassOf<class AEarth> EarthBlocks;
 };

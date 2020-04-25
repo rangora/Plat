@@ -4,6 +4,7 @@
 
 #include "EngineMinimal.h"
 #include "CoreMinimal.h"
+#include "Engine/Engine.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(Plat, Log, All);
 
@@ -12,3 +13,8 @@ DECLARE_LOG_CATEGORY_EXTERN(Plat, Log, All);
 #define ABLOG(Verbosity, Format, ...) UE_LOG(Plat, Verbosity, TEXT("%s %s"), *FString::Printf(Format, ##__VA_ARGS__))
 
 #define ABCHECK(Expr, ...) { if (!(Expr)) { ABLOG(Error, TEXT("ASSERTION : %s"), TEXT("'"#Expr"'")); return __VA_ARGS__; } }
+
+/*
+GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+			FString::Printf(TEXT("")));
+*/

@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "AvatarAnimInstance.h"
 
 UAvatarAnimInstance::UAvatarAnimInstance() {
@@ -24,7 +23,6 @@ void UAvatarAnimInstance::NativeUpdateAnimation(float deltaSeconds) {
 		auto Character = Cast<ACharacter>(Pawn);
 		if (Character)
 			isInAir = Character->GetMovementComponent()->IsFalling();
-		
 	}
 }
 

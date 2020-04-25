@@ -3,20 +3,50 @@
 #pragma once
 
 #include "Plat.h"
-#include "CoreMinimal.h"
-#include "AvatarAnimInstance.h"
 #include "GameFramework/Character.h"
+#include "avatar/AvatarAnimInstance.h"
+#include "avatar/AvatarEquipment.h"
 #include "Components/WidgetComponent.h"
 #include "Components/TimelineComponent.h"
 #include "Components/BoxComponent.h"
+#include "item/Interactable.h"
+#include "item/AutoPickup.h"
+#include "system/AvatarController.h"
+#include "UI/ScreenUI.h"
 #include "Avatar.generated.h"
 
+enum class ViewState {FIRSTPERSON, THIRDPERSON};
 
 UCLASS()
 class PLAT_API AAvatar : public ACharacter {
 	GENERATED_BODY()
 
+public:
+	AAvatar();
+
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void PostInitializeComponents() override;
+
+	void Attack();
+	void UseItem();
+	void ViewChange();
+
+	/* 범위 내 대해서 AutoPuckup함수 발동. */
+	void CollectAutoPickups();
+
+	/* 범위 내 가장 가까운 상호작용 대상을 체크 한다. */
+	void CheckForInteractables();
+
+	float GetHealthValue();
+
+protected:
+	virtual void BeginPlay() override;
+
 private:
+	UFUNCTION()
+		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
 	// Control..
 	void UpDown(float newAxisValue);
 	void LeftRight(float newAxisValue);
@@ -25,14 +55,14 @@ private:
 
 	void AttackCheck();
 
-	float attackPower;
+public:
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+		AAvatarEquipment* Weapon;
 
+private:
 	// for UI..
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", Meta = (AllowPrivateAccess = true))
-	float healthValue;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", Meta = (AllowPrivateAccess = true))
-	float moodValue;
+		float healthValue;
 
 	// for attack function..
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
@@ -43,35 +73,24 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		bool isAttacking;
-	
+
 	UPROPERTY()
 		class UAvatarAnimInstance* ABAnim;
 
-	UFUNCTION()
-		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
-protected:
-	virtual void BeginPlay() override;
-	void SetControlMode(int32 controlMode);
-
-public:	
-	AAvatar();
-
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	virtual void PostInitializeComponents() override;
-
-	void Attack();
-	void ShowInventory();
-		
-
-	UPROPERTY(VisibleAnywhere, Category = UI)
-		class UWidgetComponent* HPBarWidget;
-	
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		USpringArmComponent* SpringArm;
-	
+
+	UPROPERTY(VisibleDefaultsOnly)
+		USkeletalMeshComponent* FirstPersonMesh;
+
 	UPROPERTY(VisibleAnywhere, Category = Camera)
-		UCameraComponent* Camera;
-	
+		UCameraComponent* CameraComponent;
+
+	/* Collection sphere */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+		class USphereComponent* CollectionSphere;
+
+	float attackPower;
+
+	ViewState CurrentView;
 };
