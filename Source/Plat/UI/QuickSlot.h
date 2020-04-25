@@ -21,6 +21,8 @@ class PLAT_API UQuickSlot : public UUserWidget {
 public:
 	UQuickSlot(const FObjectInitializer& ObjectInitializer);
 
+	virtual void NativeConstruct() override;
+
 	void InitQuickSlots(class UInventorySlot* Slot);
 
 	void Refresh();
@@ -36,11 +38,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		UTextBlock* ItemCount;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-		UInventorySlot* LinkedSlot;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
+		UImage* ThumbnailImage;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-		FInventoryItem PointedItem;
+		UInventorySlot* LinkedSlot;
 
 private:
 };

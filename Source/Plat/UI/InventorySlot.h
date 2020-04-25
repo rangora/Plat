@@ -60,6 +60,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		UTextBlock* ItemCount;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
+		UImage* ThumbnailImage;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FInventoryItem ItemData;
 

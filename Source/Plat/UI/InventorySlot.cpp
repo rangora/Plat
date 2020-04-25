@@ -4,13 +4,16 @@
 
 UInventorySlot::UInventorySlot(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer) {
+	
 	Allocatable = true;
 	Count = -1;
 	Index = -1;
+	ItemData.Clear();
 }
 
 void UInventorySlot::NativeConstruct() {
 	Super::NativeConstruct();
+	ThumbnailImage->SetBrushFromTexture(ItemData.Thumbnail);
 }
 
 void UInventorySlot::ChangeItemCount(int num) {
@@ -28,6 +31,7 @@ void UInventorySlot::Refresh() {
 		ItemData.Clear();
 		ItemCount->SetVisibility(ESlateVisibility::Hidden);
 	}
+	ThumbnailImage->SetBrushFromTexture(ItemData.Thumbnail);
 }
 
 bool UInventorySlot::UseItem() {
@@ -153,6 +157,7 @@ bool UInventorySlot::SetNewItem(FInventoryItem NewItem) {
 	ItemData.SetThisItem(NewItem);
 	Count = 1;
 	Allocatable = false;
+	Refresh();
 
 	return true;
 }
