@@ -84,14 +84,23 @@ void AAvatarController::Interact() {
 void AAvatarController::SwitchIventory() {
 	if (IsValid(PlayerInventoryWidget)) {
 		if (!IsInventoryOpen) {
-			PlayerInventoryWidget->AddToViewport();
+			PlayerInventoryWidget->AddToViewport(1);
 			IsInventoryOpen = true;
 			bShowMouseCursor = true;
+
+			FInputModeGameAndUI Mode;
+			Mode.SetWidgetToFocus(PlayerInventoryWidget->GetCachedWidget());
+			
+			SetInputMode(Mode);
 		}
 		else {
 			PlayerInventoryWidget->RemoveFromParent();
 			IsInventoryOpen = false;
 			bShowMouseCursor = false;
+
+			FInputModeGameOnly Mode;		
+			
+			SetInputMode(Mode);
 		}
 	}
 }
@@ -164,6 +173,15 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 
 			IPlayer->Weapon = WeaponActor;
 		}
+	}
+}
+
+void AAvatarController::CloseInventory() {
+	if (IsInventoryOpen) {
+		PlayerInventoryWidget->RemoveFromParent();
+		IsInventoryOpen = false;
+		bShowMouseCursor = false;
+		SetInputMode(FInputModeGameAndUI());
 	}
 }
 

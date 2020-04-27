@@ -20,7 +20,9 @@ class PLAT_API UPlayerInventory : public UBaseUI {
 public:
 
 	UPlayerInventory(const FObjectInitializer& ObjectInitializer);
+
 	virtual void NativeConstruct() override;
+	FReply NativeOnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyboardEvent);
 
 	int FindItemInSlots(FName ItemID);
 

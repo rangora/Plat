@@ -14,10 +14,40 @@ UPlayerInventory::UPlayerInventory(const FObjectInitializer& ObjectInitializer)
 
 	if (UI_SLOT_C.Succeeded())
 		SlotClass = UI_SLOT_C.Class;
+
+	
 }
 
 void UPlayerInventory::NativeConstruct() {
 	Super::NativeConstruct();
+
+	bIsFocusable = true;
+	SetKeyboardFocus();
+}
+
+FReply UPlayerInventory::NativeOnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyboardEvent) {
+	FEventReply reply;
+	reply.NativeReply = Super::NativeOnKeyDown(MyGeometry, InKeyboardEvent);
+
+	FString Input = InKeyboardEvent.GetKey().ToString();
+
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+		FString::Printf(TEXT("Input : %s"), *Input));
+
+	if (Input.Equals("B")) {
+		//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+		//	FString::Printf(TEXT("Inside")));
+		//IController->PlayerInventoryWidget->RemoveFromParent();
+		//IController->IsInventoryOpen = false;
+		//IController->bShowMouseCursor = false;
+
+		//FInputModeGameOnly Mode;
+		//IController->SetInputMode(Mode);
+
+		
+	}
+	
+	return reply.NativeReply;
 }
 
 int UPlayerInventory::FindItemInSlots(FName ItemID) {
@@ -66,7 +96,6 @@ int UPlayerInventory::FindEmptySlot() {
 }
 
 bool UPlayerInventory::RefreshQuickSlots() {
-	//auto IController = Cast<AAvatarController>(Controller);
 	int slotSize = IController->ScreenUIWidget->QuickSlots.Num();
 	if (slotSize) {
 		IController->ScreenUIWidget->QuickSlots[0]->Refresh();
