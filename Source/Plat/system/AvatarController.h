@@ -27,7 +27,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 		bool AddItemToInventory(FName ID);
 
+	UFUNCTION(BlueprintCallable)
+		void CloseInventory();
+
 	void CreateInventory();
+
+	
 
 protected:
 	virtual void BeginPlay() override;
@@ -56,9 +61,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 		class AInteractable* CurrentInteractable;
 
+	bool IsInventoryOpen = false;
+
 private:
 	AAvatarEquipment* WeaponTable;
 
 
-	bool IsInventoryOpen = false;
+	
 };
