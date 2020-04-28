@@ -17,6 +17,8 @@ class PLAT_API ABasicBlock : public ABlock {
 public:
 	ABasicBlock();
 
+	void DropItem();
+
 	virtual void PostInitializeComponents() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 

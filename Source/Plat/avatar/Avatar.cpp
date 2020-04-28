@@ -13,7 +13,7 @@ AAvatar::AAvatar() {
 	healthValue = 1.0;
 
 	// Create SpringArmComponent
-	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 
@@ -33,20 +33,21 @@ AAvatar::AAvatar() {
 		GetMesh()->SetAnimInstanceClass(AVATAR_ANIM.Class);
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f)); // Set pivot
-	
+
 	// Weapon
 	Weapon = nullptr;
 	
 	// Collision
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Avatar"));
-
-	// jump
-	GetCharacterMovement()->JumpZVelocity = 600.0f;
-
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AAvatar::PickupItem);
+	
 	// create the collection sphere for auto pick up system
 	CollectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollectionSphere"));
 	CollectionSphere->SetupAttachment(RootComponent);
-	CollectionSphere->SetSphereRadius(200.f);
+	CollectionSphere->SetSphereRadius(350.f);
+
+	// jump
+	GetCharacterMovement()->JumpZVelocity = 600.0f;	
 	
 	// view
 	CurrentView = ViewState::FIRSTPERSON;
@@ -286,6 +287,16 @@ void AAvatar::ViewChange() {
 			CurrentView = ViewState::FIRSTPERSON;
 			break;
 		}
+	}
+}
+
+void AAvatar::PickupItem(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
+	AAutoPickup* Item = Cast<AAutoPickup>(OtherActor);
+
+	if (IsValid(Item)) {
+		auto IController = Cast<AAvatarController>(GetController());
+		if (IController->AddItemToInventory(Item->GetItemID()))
+			Item->Destroy();
 	}
 }
 

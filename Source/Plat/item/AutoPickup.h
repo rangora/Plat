@@ -11,6 +11,7 @@
 This class is used to implement items which are picked up automatically
 when the player is in pickup range to the actors.
 */
+
 UCLASS()
 class PLAT_API AAutoPickup : public AActor {
 	GENERATED_BODY()
@@ -18,6 +19,7 @@ class PLAT_API AAutoPickup : public AActor {
 public:
 	AAutoPickup();
 
+	virtual void Tick(float DeltaTime) override;
 	virtual void Collect_Implementation(APlayerController* Controller);
 
 	FName GetItemID();
@@ -26,9 +28,15 @@ public:
 		void Collect(APlayerController* Controller);
 
 protected:
+	UPROPERTY(VisibleAnywhere)
+		URotatingMovementComponent* Rotation;
+
 	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* PickupMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName ItemID;
+
+private:
+	float rotateSpeed;
 };

@@ -2,6 +2,7 @@
 
 
 #include "BasicBlock.h"
+#include "item/AutoPickup.h"
 
 ABasicBlock::ABasicBlock() {
 	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh"));
@@ -14,11 +15,27 @@ ABasicBlock::ABasicBlock() {
 	Super::Name = "BasicBlock";
 }
 
+void ABasicBlock::DropItem() {
+	if (Name.Equals("BasicBlock"))
+		return;
+	else {
+		FString BP_ItemPath = "/Game/Blueprints/Auto_" + Name + "." + "Auto_" + Name + "_C";
+		UClass* BP_Item = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_ItemPath));
+
+		if (IsValid(BP_Item)) {
+			FVector DropLocation = GetActorLocation();
+			GetWorld()->SpawnActor<AAutoPickup>(BP_Item,
+				DropLocation, FRotator::ZeroRotator);
+		}
+	}
+}
+
 void ABasicBlock::PostInitializeComponents() {
 	Super::PostInitializeComponents();
 
 	BlockStat->OnHPIsZero.AddLambda([this]() {
 		SetActorEnableCollision(false);
+		DropItem();
 		Destroy();
 		});
 }

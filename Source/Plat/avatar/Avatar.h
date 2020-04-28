@@ -32,6 +32,9 @@ public:
 	void UseItem();
 	void ViewChange();
 
+	UFUNCTION()
+		void PickupItem(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	/* 범위 내 대해서 AutoPuckup함수 발동. */
 	void CollectAutoPickups();
 
@@ -85,6 +88,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* CameraComponent;
+
+	UPROPERTY(EditAnywhere)
+		UShapeComponent* PickupBox;
 
 	/* Collection sphere */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))

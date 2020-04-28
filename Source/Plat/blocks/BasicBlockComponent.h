@@ -6,6 +6,9 @@
 #include "Components/ActorComponent.h"
 #include "BasicBlockComponent.generated.h"
 
+
+class AManPickup;
+
 DECLARE_MULTICAST_DELEGATE(FOnHPIsZeroDelegate);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -24,6 +27,9 @@ protected:
 
 public:	
 	FOnHPIsZeroDelegate OnHPIsZero;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+		AActor* DropItem;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 		float maxHP;
