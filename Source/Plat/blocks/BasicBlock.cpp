@@ -2,6 +2,8 @@
 
 
 #include "BasicBlock.h"
+#include "avatar/Avatar.h"
+#include "system/AvatarController.h"
 #include "item/AutoPickup.h"
 
 ABasicBlock::ABasicBlock() {
@@ -47,6 +49,68 @@ float ABasicBlock::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 	return finalDamage;
 }
 
-bool ABasicBlock::UseItem() {
-	return true;
+bool ABasicBlock::UseItem(ACharacter* Player, APlayerController* Contrller, UWorld* World, FString BlockName) {
+	FString BP_GrassPath = "/Game/Blueprints/BP_" + BlockName + "." + "BP_" + BlockName + "_C"; 
+	UClass* BP_Block = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
+	
+	if (!IsValid(BP_Block))
+		return false;
+	
+	auto IPlayer = Cast<AAvatar>(Player);
+	auto IController = Cast<AAvatarController>(Contrller);
+	auto CameraComponent = IPlayer->GetCameraComponent();
+
+	FVector Start = CameraComponent->GetComponentLocation();
+	FVector End = (CameraComponent->GetForwardVector() * IPlayer->interactRange) + Start;
+
+	FHitResult CollisionResult;
+	FCollisionQueryParams Params(NAME_None, false, IPlayer);
+	bool bResult = World->SweepSingleByChannel(
+		CollisionResult,
+		Start,
+		End,
+		FQuat::Identity,
+		ECollisionChannel::ECC_GameTraceChannel1,
+		FCollisionShape::MakeSphere((1, 1, 1)),
+		Params);
+
+	if (bResult) {
+		auto _hitLocation = CollisionResult.Location;
+		auto _blockActor = CollisionResult.GetActor();
+		FVector CharaLocation = CameraComponent->GetComponentLocation();
+		FVector _targetLocation = _blockActor->GetActorLocation();
+		FVector _deployLocation = _targetLocation;
+		FVector _diff = _targetLocation - _hitLocation;
+
+		if (_diff.X < -50.f)
+			_deployLocation.X += 100;
+		else if (_diff.X > 50.f)
+			_deployLocation.X -= 100;
+		else if (_diff.Y < -50.f)
+			_deployLocation.Y += 100;
+		else if (_diff.Y > 50.f)
+			_deployLocation.Y -= 100;
+		else if (_diff.Z < -100.f)
+			_deployLocation.Z += 100;
+		else if (_diff.Z > 1.f)
+			_deployLocation.Z -= 100;
+
+
+		CharaLocation.X = FMath::RoundToInt(CharaLocation.X / 100.f) * 100;
+		CharaLocation.Y = FMath::RoundToInt(CharaLocation.Y / 100.f) * 100;
+		CharaLocation.Z = int(CharaLocation.Z) / 100 * 100;
+
+		// Check collision between player and block will be deployed.
+		if (CharaLocation.Equals(_deployLocation)) {
+			return false;
+		}
+
+		// Build the block.
+		else {		
+			World->SpawnActor<ABasicBlock>(BP_Block, _deployLocation, FRotator::ZeroRotator);
+			return true;
+		}
+	}
+
+	return false;
 }

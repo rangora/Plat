@@ -3,6 +3,7 @@
 #include "InventorySlot.h"
 #include "avatar/Avatar.h"
 #include "system/AvatarController.h"
+#include "blocks/BasicBlock.h"
 #include "item/InventoryItem.h"
 
 
@@ -44,22 +45,23 @@ bool UInventorySlot::UseItem() {
 		return false;
 
 	case EItemType::BLOCK:
-		Count--;
-		Refresh();
+		if (!ABasicBlock::UseItem(IPlayer, IController, GetWorld(), ItemData.ItemName.ToString()))
+			return false;
 		break;
 		
 	case EItemType::FOOD:
-		Count--;
-		Refresh();
 		break;
 
-	default:
+	default: 
 		return false;
 	}
+
+	Count--;
+	Refresh();
 	
 	if (Count == 0) {
-		if (IPlayer->Weapon)
-			IPlayer->Weapon->Destroy();
+		if (IPlayer->GetWeapon())
+			IPlayer->GetWeapon()->Destroy();
 
 		IController->ScreenUIWidget->SetUsingIndex(-1);
 	}
@@ -110,10 +112,9 @@ bool UInventorySlot::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 
 	// If player use a item in the swapped slot.
 	if (slot1 == usingIndex + QUICKSTART || slot2 == usingIndex + QUICKSTART) {
-		if (IPlayer->Weapon != nullptr) {
+		if (IPlayer->GetWeapon() != nullptr) {
 			IController->ScreenUIWidget->SetUsingIndex(-1);
-			IPlayer->Weapon->Destroy();
-			IPlayer->Weapon = nullptr;
+			IPlayer->GetWeapon()->Destroy();
 		}
 	}
 

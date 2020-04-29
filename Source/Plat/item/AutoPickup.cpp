@@ -9,6 +9,7 @@ AAutoPickup::AAutoPickup() {
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>("PickupMesh");
 	PickupMesh->SetSimulatePhysics(true);
 	PickupMesh->SetCollisionProfileName(TEXT("Item"));
+	PickupMesh->SetRelativeScale3D(FVector(0.3f, 0.3f, 0.3f));
 	RootComponent = Cast<USceneComponent>(PickupMesh);
 
 	rotateSpeed = 55.f;

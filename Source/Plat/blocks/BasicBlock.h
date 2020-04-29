@@ -10,6 +10,7 @@
 /**
  * 
  */
+
 UCLASS()
 class PLAT_API ABasicBlock : public ABlock {
 	GENERATED_BODY()
@@ -22,7 +23,7 @@ public:
 	virtual void PostInitializeComponents() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-	virtual bool UseItem();
+	static bool UseItem(ACharacter* Player, APlayerController* Contrller, UWorld* World, FString BlockName);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

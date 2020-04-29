@@ -103,8 +103,6 @@ bool UPlayerInventory::RefreshQuickSlots() {
 		IController->ScreenUIWidget->QuickSlots[2]->Refresh();
 		IController->ScreenUIWidget->QuickSlots[3]->Refresh();
 
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-			FString::Printf(TEXT("In Refreshed..")));
 		return true;
 	}
 	return false;

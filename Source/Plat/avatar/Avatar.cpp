@@ -6,8 +6,8 @@
 AAvatar::AAvatar() {
 	PrimaryActorTick.bCanEverTick = true;
 	isAttacking = false;
-	Weapon = nullptr;
 	AttackRange = 200.;
+	interactRange = 600.;
 	AttackRadius = 50.;
 	attackPower = 50.;
 	healthValue = 1.0;
@@ -33,9 +33,6 @@ AAvatar::AAvatar() {
 		GetMesh()->SetAnimInstanceClass(AVATAR_ANIM.Class);
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f)); // Set pivot
-
-	// Weapon
-	Weapon = nullptr;
 	
 	// Collision
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Avatar"));
@@ -49,6 +46,9 @@ AAvatar::AAvatar() {
 	// jump
 	GetCharacterMovement()->JumpZVelocity = 600.0f;	
 	
+	// Weapon
+	Weapon = nullptr;
+
 	// view
 	CurrentView = ViewState::FIRSTPERSON;
 	ViewChange();
@@ -81,21 +81,21 @@ void AAvatar::Turn(float newAxisValue) {
 }
 
 void AAvatar::AttackCheck() {
+	FVector Start = CameraComponent->GetComponentLocation();
+	FVector End = (CameraComponent->GetForwardVector() * AttackRange) + Start;
+
 	FHitResult HitResult;
 	FCollisionQueryParams Params(NAME_None, false, this);
 	bool bResult = GetWorld()->SweepSingleByChannel(
 		HitResult,
-		GetActorLocation(),
-		GetActorLocation() + GetActorForwardVector() * AttackRange,
+		Start,
+		End,
 		FQuat::Identity,
 		ECollisionChannel::ECC_GameTraceChannel1,
 		FCollisionShape::MakeSphere(AttackRadius),
 		Params);
 
 	if (bResult) {
-		if (HitResult.Actor.IsValid())
-			ABLOG(Warning, TEXT("Hit Actor Name : %s"), *HitResult.Actor->GetName());
-
 		FDamageEvent DamageEvent;
 		HitResult.Actor->TakeDamage(attackPower, DamageEvent, GetController(), this);
 		this->healthValue -= 0.1f;
@@ -108,20 +108,11 @@ void AAvatar::Attack() {
 	ABAnim->PlayAttackMontage();
 	isAttacking = true;
 
-	//FVector Start = Camera->GetComponentLocation();
-	//FVector end = (Camera->GetForwardVector() * 1000) + Start;
-
-	//DrawDebugLine(GetWorld(), Start, end, FColor::Red, false, 3.f, 0, 10.f);
-
 	AttackCheck();
 }
 
 void AAvatar::UseItem() {
-	float Range = 350.f;
 	auto IController = Cast<AAvatarController>(GetController());
-	FVector Start = CameraComponent->GetComponentLocation();
-	FVector End = (CameraComponent->GetForwardVector() * Range) + Start;
-	
 	int index = IController->ScreenUIWidget->GetUsingIndex();
 	
 	// Check quick slot valiable.
@@ -130,68 +121,7 @@ void AAvatar::UseItem() {
 			FString::Printf(TEXT("No Index")));
 		return;
 	}
-	FString BlockName = IController->ScreenUIWidget->QuickSlots[index]->LinkedSlot->ItemData.ItemName.ToString();
-	
-	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-	//	FString::Printf(TEXT("BlockName : %s"), *BlockName));
-
-	FHitResult CollisionResult;
-	FCollisionQueryParams Params(NAME_None, false, this);
-	bool bResult = GetWorld()->SweepSingleByChannel(
-		CollisionResult,
-		Start,
-		End,
-		FQuat::Identity,
-		ECollisionChannel::ECC_GameTraceChannel1,
-		FCollisionShape::MakeSphere((1, 1, 1)),
-		Params);
-
-	if (bResult) {
-		auto _hitLocation = CollisionResult.Location;
-		auto _blockActor = CollisionResult.GetActor();
-		FVector CharaLocation = CameraComponent->GetComponentLocation();
-		FVector _targetLocation = _blockActor->GetActorLocation();
-		FVector _deployLocation = _targetLocation;
-		FVector _diff = _targetLocation - _hitLocation;
-
-		if (_diff.X < -50.f)
-			_deployLocation.X += 100;
-		else if (_diff.X > 50.f)
-			_deployLocation.X -= 100;
-		else if (_diff.Y < -50.f)
-			_deployLocation.Y += 100;
-		else if (_diff.Y > 50.f)
-			_deployLocation.Y -= 100;
-		else if (_diff.Z < -100.f)
-			_deployLocation.Z += 100;
-		else if (_diff.Z > 1.f)
-			_deployLocation.Z -= 100;
-
-
-		CharaLocation.X = FMath::RoundToInt(CharaLocation.X / 100.f) * 100;
-		CharaLocation.Y = FMath::RoundToInt(CharaLocation.Y / 100.f) * 100;
-		CharaLocation.Z = int(CharaLocation.Z) / 100 * 100;
-
-		// Check collision between player and block will be deployed.
-		if (CharaLocation.Equals(_deployLocation)) {
-			return;
-		}
-
-		// Build the block.
-		else {
-			FString BP_GrassPath = "/Game/Blueprints/BP_" 
-				+ BlockName + "." + "BP_" + BlockName + "_C"; // Dirt.BP_Dirt_C";
-			UClass* BP_Block = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
-
-			if (IsValid(BP_Block)) {
-				GetWorld()->SpawnActor<ABasicBlock>(BP_Block,
-					_deployLocation, FRotator::ZeroRotator);
-			
-				IController->ScreenUIWidget->QuickSlots[index]->UseItem();
-			}
-			return;
-		}
-	}
+	IController->ScreenUIWidget->QuickSlots[index]->UseItem();
 }
 
 void AAvatar::CollectAutoPickups() {
@@ -252,16 +182,30 @@ float AAvatar::GetHealthValue() {
 	return healthValue;
 }
 
+AAvatarEquipment* AAvatar::GetWeapon() {
+	return Weapon;
+}
+
+UCameraComponent* AAvatar::GetCameraComponent() {
+	return CameraComponent;
+}
+
+void AAvatar::SetWeapon(AAvatarEquipment* NewWeapon) {
+	Weapon = NewWeapon;
+}
+
 void AAvatar::BeginPlay() {
 	Super::BeginPlay();
 }
 
 void AAvatar::ViewChange() {
 	switch (CurrentView) {
+		// FirstView -> ThirdView
 	case ViewState::FIRSTPERSON: {
 			SpringArm->TargetArmLength = 400.0f;
 			SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 			SpringArm->bUsePawnControlRotation = true; 
+			AttackRange += SpringArm->TargetArmLength;
 
 			bUseControllerRotationYaw = false;
 			bUseControllerRotationPitch = false;
@@ -277,7 +221,9 @@ void AAvatar::ViewChange() {
 			CurrentView = ViewState::THIRDPERSON;
 			break;
 		}
+		// ThriedView -> FirstView
 	case ViewState::THIRDPERSON: {	
+			AttackRange -= SpringArm->TargetArmLength;
 			SpringArm->SetRelativeLocation(FVector(23.f, 0.f, 67.f));
 			SpringArm->TargetArmLength = 0.f;
 			bUseControllerRotationYaw = true;
@@ -292,6 +238,9 @@ void AAvatar::ViewChange() {
 
 void AAvatar::PickupItem(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
 	AAutoPickup* Item = Cast<AAutoPickup>(OtherActor);
+
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+		FString::Printf(TEXT("ID:%s"), *Item->GetItemID().ToString()));
 
 	if (IsValid(Item)) {
 		auto IController = Cast<AAvatarController>(GetController());

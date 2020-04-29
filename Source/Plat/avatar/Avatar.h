@@ -11,6 +11,7 @@
 #include "Components/BoxComponent.h"
 #include "item/Interactable.h"
 #include "item/AutoPickup.h"
+#include "item/InventoryItem.h"
 #include "system/AvatarController.h"
 #include "UI/ScreenUI.h"
 #include "Avatar.generated.h"
@@ -32,25 +33,26 @@ public:
 	void UseItem();
 	void ViewChange();
 
-	UFUNCTION()
-		void PickupItem(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	/* 범위 내 대해서 AutoPuckup함수 발동. */
+	// 범위 내 대해서 AutoPuckup함수 발동. 
 	void CollectAutoPickups();
 
-	/* 범위 내 가장 가까운 상호작용 대상을 체크 한다. */
+	// 범위 내 가장 가까운 상호작용 대상을 체크 한다. 
 	void CheckForInteractables();
 
 	float GetHealthValue();
+	AAvatarEquipment* GetWeapon();
+	UCameraComponent* GetCameraComponent();
+	void SetWeapon(AAvatarEquipment* NewWeapon);
+
+
+	UFUNCTION()
+		void PickupItem(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
-	UFUNCTION()
-		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
-	// Control..
 	void UpDown(float newAxisValue);
 	void LeftRight(float newAxisValue);
 	void LookUp(float newAxisValue);
@@ -58,9 +60,12 @@ private:
 
 	void AttackCheck();
 
+	UFUNCTION()
+		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+
 public:
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
-		AAvatarEquipment* Weapon;
+	float interactRange;
 
 private:
 	// for UI..
@@ -89,10 +94,10 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* CameraComponent;
 
-	UPROPERTY(EditAnywhere)
-		UShapeComponent* PickupBox;
+	UPROPERTY(VisibleAnywhere, Category = Weapon)
+		AAvatarEquipment* Weapon;
 
-	/* Collection sphere */
+	// Collection sphere 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USphereComponent* CollectionSphere;
 

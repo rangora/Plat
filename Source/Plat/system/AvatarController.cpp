@@ -132,8 +132,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 	if (ItemName.Equals("None")) {
 		if (ScreenUIWidget->GetUsingIndex() != -1) {
 			ScreenUIWidget->QuickSlots[ScreenUIWidget->GetUsingIndex()]->ShowBorder(false);
-			IPlayer->Weapon->Destroy();
-			IPlayer->Weapon = nullptr;
+			IPlayer->GetWeapon()->Destroy();
 			ScreenUIWidget->SetUsingIndex(-1);
 		}
 		return;
@@ -142,8 +141,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 	else if (ScreenUIWidget->GetUsingIndex() == inputIndex) {
 		ScreenUIWidget->SetUsingIndex(-1);
 		ScreenUIWidget->QuickSlots[inputIndex]->ShowBorder(false);
-		IPlayer->Weapon->Destroy();
-		IPlayer->Weapon = nullptr;
+		IPlayer->GetWeapon()->Destroy();
 		return;
 	}
 	// QuickSlot of input index has an item.
@@ -151,8 +149,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 		// Remove weapon's static mesh if there are pre-behavior.
 		if (ScreenUIWidget->GetUsingIndex() > -1) {
 			ScreenUIWidget->QuickSlots[ScreenUIWidget->GetUsingIndex()]->ShowBorder(false);
-			IPlayer->Weapon->Destroy();
-			IPlayer->Weapon = nullptr;
+			IPlayer->GetWeapon()->Destroy();
 		}
 
 		ScreenUIWidget->SetUsingIndex(inputIndex);
@@ -171,7 +168,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 			WeaponActor->AttachToComponent(IPlayer->GetMesh(),
 				FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 
-			IPlayer->Weapon = WeaponActor;
+			IPlayer->SetWeapon(WeaponActor);
 		}
 	}
 }

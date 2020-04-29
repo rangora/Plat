@@ -40,12 +40,6 @@ public:
 		FText ItemName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 Weight;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 Value;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UTexture2D* Thumbnail;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
