@@ -5,13 +5,13 @@
 #include "Plat.h"
 #include "GameFramework/Character.h"
 #include "avatar/AvatarAnimInstance.h"
-#include "avatar/AvatarEquipment.h"
 #include "Components/WidgetComponent.h"
 #include "Components/TimelineComponent.h"
 #include "Components/BoxComponent.h"
 #include "item/Interactable.h"
 #include "item/AutoPickup.h"
 #include "item/InventoryItem.h"
+#include "item/Equipment.h"
 #include "system/AvatarController.h"
 #include "UI/ScreenUI.h"
 #include "Avatar.generated.h"
@@ -40,9 +40,9 @@ public:
 	void CheckForInteractables();
 
 	float GetHealthValue();
-	AAvatarEquipment* GetWeapon();
+	AEquipment* GetWeapon();
 	UCameraComponent* GetCameraComponent();
-	void SetWeapon(AAvatarEquipment* NewWeapon);
+	void SetWeapon(AEquipment* NewWeapon);
 
 
 	UFUNCTION()
@@ -95,7 +95,7 @@ private:
 		UCameraComponent* CameraComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
-		AAvatarEquipment* Weapon;
+		AEquipment* Weapon;
 
 	// Collection sphere 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))

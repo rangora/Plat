@@ -15,9 +15,6 @@
  *
  */
 
-#define QUICKSTART 12
-#define QUICKEND   15
-
 
 UCLASS()
 class PLAT_API UInventorySlot : public UBaseSlot {
@@ -26,8 +23,8 @@ class PLAT_API UInventorySlot : public UBaseSlot {
 public:
 	UInventorySlot(const FObjectInitializer& ObjectInitializer);
 
-	void ChangeItemCount(int num);
-	//UFUNCTION(BlueprintCallable)
+	void AddItemCount(int num);
+	bool RefreshQuickSlot();
 	bool SetNewItem(FInventoryItem NewItem);
 
 	virtual void NativeConstruct() override;
@@ -47,4 +44,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UInventorySlot* DragImageWidget;
+
+private:
+	enum { QuickStart = 12, QuickEnd = 15 };
 };

@@ -6,9 +6,9 @@
 #include "GameFramework/PlayerController.h"
 #include "item/Interactable.h"
 #include "item/InventoryItem.h"
+#include "item/Equipment.h"
 #include "system/SandBoxState.h"
 #include "avatar/Avatar.h"
-#include "avatar/AvatarEquipment.h"
 #include "UI/PlayerInventory.h"
 #include "InputCoretypes.h"
 #include "AvatarController.generated.h"
@@ -64,7 +64,7 @@ public:
 	bool IsInventoryOpen = false;
 
 private:
-	AAvatarEquipment* WeaponTable;
+	AEquipment* WeaponTable;
 
 
 	

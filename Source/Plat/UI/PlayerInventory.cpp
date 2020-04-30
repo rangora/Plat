@@ -7,7 +7,7 @@
 
 UPlayerInventory::UPlayerInventory(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer) {
-	SlotSize = 16;
+	SlotSize = InventorySlotSize;
 
 	static ConstructorHelpers::FClassFinder<UInventorySlot> UI_SLOT_C(
 		TEXT("/Game/UMG/BP_InventorySlot.BP_InventorySlot_C"));
@@ -98,11 +98,8 @@ int UPlayerInventory::FindEmptySlot() {
 bool UPlayerInventory::RefreshQuickSlots() {
 	int slotSize = IController->ScreenUIWidget->QuickSlots.Num();
 	if (slotSize) {
-		IController->ScreenUIWidget->QuickSlots[0]->Refresh();
-		IController->ScreenUIWidget->QuickSlots[1]->Refresh();
-		IController->ScreenUIWidget->QuickSlots[2]->Refresh();
-		IController->ScreenUIWidget->QuickSlots[3]->Refresh();
-
+		for(int i = 0; i < slotSize; i++)
+			IController->ScreenUIWidget->QuickSlots[i]->Refresh();
 		return true;
 	}
 	return false;

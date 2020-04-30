@@ -45,4 +45,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		int SlotSize;
+
+private:
+	enum { InventorySlotSize = 16 };
 };

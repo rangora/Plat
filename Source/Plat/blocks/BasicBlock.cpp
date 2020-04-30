@@ -77,7 +77,7 @@ bool ABasicBlock::UseItem(ACharacter* Player, APlayerController* Contrller, UWor
 	if (bResult) {
 		auto _hitLocation = CollisionResult.Location;
 		auto _blockActor = CollisionResult.GetActor();
-		FVector CharaLocation = CameraComponent->GetComponentLocation();
+		//FVector CharaLocation = CameraComponent->GetComponentLocation();
 		FVector _targetLocation = _blockActor->GetActorLocation();
 		FVector _deployLocation = _targetLocation;
 		FVector _diff = _targetLocation - _hitLocation;
@@ -95,13 +95,18 @@ bool ABasicBlock::UseItem(ACharacter* Player, APlayerController* Contrller, UWor
 		else if (_diff.Z > 1.f)
 			_deployLocation.Z -= 100;
 
-
+		FVector CharaLocation = IPlayer->GetCapsuleComponent()->GetComponentLocation();
 		CharaLocation.X = FMath::RoundToInt(CharaLocation.X / 100.f) * 100;
 		CharaLocation.Y = FMath::RoundToInt(CharaLocation.Y / 100.f) * 100;
 		CharaLocation.Z = int(CharaLocation.Z) / 100 * 100;
 
+		FVector MiddleLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 100.f);
+		FVector TopLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 200.f);
+
 		// Check collision between player and block will be deployed.
-		if (CharaLocation.Equals(_deployLocation)) {
+		if (CharaLocation.Equals(_deployLocation) ||  
+			MiddleLocation.Equals(_deployLocation) ||
+				TopLocation.Equals(_deployLocation)) {
 			return false;
 		}
 

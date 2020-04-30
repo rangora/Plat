@@ -1,36 +1,41 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AvatarEquipment.h"
+#include "Equipment.h"
 
-AAvatarEquipment::AAvatarEquipment() {
+AEquipment::AEquipment() {
 	PrimaryActorTick.bCanEverTick = false;
-	
+
 	Name = "None";
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WEAPON"));
 	StaticMeshComponent->SetCollisionProfileName(TEXT("NoCollision"));
-	
+
 	RootComponent = StaticMeshComponent;
 }
 
-void AAvatarEquipment::PostInitializeComponents() {
+void AEquipment::PostInitializeComponents() {
 	Super::PostInitializeComponents();
 }
 
-void AAvatarEquipment::SetWeaponStaticMesh(const FString& ContentPath, const FString& Name) {
+bool AEquipment::SetWeaponStaticMesh(const FString& ContentPath, const FString& Name) {
 	UStaticMesh* StaticMesh = Cast<UStaticMesh>(StaticLoadObject(
 		UStaticMesh::StaticClass(), NULL, *ContentPath));
-	
-	StaticMeshComponent->SetStaticMesh(StaticMesh);
 
-	this->Name = Name;
+	if (IsValid(StaticMesh)) {
+		StaticMeshComponent->SetStaticMesh(StaticMesh);
+		this->Name = Name;
+		return true;
+	}
+	return false;
 }
 
-FString AAvatarEquipment::GetWeaponName() {
+FString AEquipment::GetWeaponName() {
 	return Name;
 }
 
-void AAvatarEquipment::BeginPlay() {
-	Super::BeginPlay();	
+void AEquipment::BeginPlay() {
+	Super::BeginPlay();
 }
+
+
 

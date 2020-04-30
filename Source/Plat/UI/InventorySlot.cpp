@@ -20,9 +20,20 @@ void UInventorySlot::NativeConstruct() {
 	ThumbnailImage->SetBrushFromTexture(ItemData.Thumbnail);
 }
 
-void UInventorySlot::ChangeItemCount(int num) {
+void UInventorySlot::AddItemCount(int num) {
 	Count += num;
 	Refresh();
+}
+
+bool UInventorySlot::RefreshQuickSlot() {
+	// Check whether this slot is bind with quick slot or not, 
+	// if bind, refresh it.
+	if (QuickStart <= Index && Index <= QuickEnd) {
+		int qIndex = Index - QuickStart;
+		IController->ScreenUIWidget->QuickSlots[qIndex]->Refresh();
+		return true;
+	}
+	return false;
 }
 
 void UInventorySlot::Refresh() {
@@ -105,13 +116,13 @@ bool UInventorySlot::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 		return false;
 
 	// If there are any swap slots that bind with quick slot, refresh it.
-	if ((QUICKSTART <= slot1 && slot1 <= QUICKEND) ||
-		(QUICKSTART <= slot2 && slot2 <= QUICKEND)) {
+	if ((QuickStart <= slot1 && slot1 <= QuickEnd) ||
+		(QuickStart <= slot2 && slot2 <= QuickEnd)) {
 		IController->PlayerInventoryWidget->RefreshQuickSlots();
 	}
 
-	// If player use a item in the swapped slot.
-	if (slot1 == usingIndex + QUICKSTART || slot2 == usingIndex + QUICKSTART) {
+	// If player use a item in the swapped slot, unequip the weapon.
+	if (slot1 == usingIndex + QuickStart || slot2 == usingIndex + QuickStart) {
 		if (IPlayer->GetWeapon() != nullptr) {
 			IController->ScreenUIWidget->SetUsingIndex(-1);
 			IPlayer->GetWeapon()->Destroy();

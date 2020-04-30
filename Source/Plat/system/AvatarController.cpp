@@ -37,8 +37,10 @@ bool AAvatarController::AddItemToInventory(FName ID) {
 		int ExistItemIndex = PlayerInventoryWidget->FindItemInSlots(ItemToAdd->ItemID);
 		
 		// Exist..
-		if (ExistItemIndex >= 0)
-			PlayerInventoryWidget->Slots[ExistItemIndex]->ChangeItemCount(1);
+		if (ExistItemIndex >= 0) {
+			PlayerInventoryWidget->Slots[ExistItemIndex]->AddItemCount(1);
+			PlayerInventoryWidget->Slots[ExistItemIndex]->RefreshQuickSlot();
+		}
 		// Doesn't exist..
 		else
 			PlayerInventoryWidget->Slots[EmptyIndex]->SetNewItem(*ItemToAdd);
@@ -132,7 +134,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 	if (ItemName.Equals("None")) {
 		if (ScreenUIWidget->GetUsingIndex() != -1) {
 			ScreenUIWidget->QuickSlots[ScreenUIWidget->GetUsingIndex()]->ShowBorder(false);
-			IPlayer->GetWeapon()->Destroy();
+			IPlayer->SetWeapon(nullptr);
 			ScreenUIWidget->SetUsingIndex(-1);
 		}
 		return;
@@ -141,7 +143,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 	else if (ScreenUIWidget->GetUsingIndex() == inputIndex) {
 		ScreenUIWidget->SetUsingIndex(-1);
 		ScreenUIWidget->QuickSlots[inputIndex]->ShowBorder(false);
-		IPlayer->GetWeapon()->Destroy();
+		IPlayer->SetWeapon(nullptr);
 		return;
 	}
 	// QuickSlot of input index has an item.
@@ -149,20 +151,20 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 		// Remove weapon's static mesh if there are pre-behavior.
 		if (ScreenUIWidget->GetUsingIndex() > -1) {
 			ScreenUIWidget->QuickSlots[ScreenUIWidget->GetUsingIndex()]->ShowBorder(false);
-			IPlayer->GetWeapon()->Destroy();
+			IPlayer->SetWeapon(nullptr);
 		}
 
 		ScreenUIWidget->SetUsingIndex(inputIndex);
 		ScreenUIWidget->QuickSlots[inputIndex]->ShowBorder(true);
-		FString Path = "/Game/resources/blocks/";
+		FString Path = "/Game/resources/equipment/";
+		//FString Path = "/Game/resources/blocks/";
 		Path.Append(ItemName + "." + ItemName);
 
-		auto WeaponActor = GetWorld()->SpawnActor<AAvatarEquipment>(AAvatarEquipment::StaticClass(),
+		auto WeaponActor = GetWorld()->SpawnActor<AEquipment>(AEquipment::StaticClass(),
 			FVector::ZeroVector, FRotator::ZeroRotator);
 
-		WeaponActor->SetWeaponStaticMesh(Path, ItemName);
-
-		if (IsValid(WeaponActor)) {
+		// If a item is equiptable, set as weapon.
+		if (WeaponActor->SetWeaponStaticMesh(Path, ItemName)) {
 			FName WeaponSocket(TEXT("hands_rSocket"));
 
 			WeaponActor->AttachToComponent(IPlayer->GetMesh(),

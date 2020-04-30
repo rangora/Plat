@@ -5,7 +5,7 @@
 
 UScreenUI::UScreenUI(const FObjectInitializer& ObjectInitializer) 
 	: Super(ObjectInitializer) {
-	SlotSize = 4;
+	SlotSize = QuickSlotSize;
 	usingIndex = -1;
 }
 

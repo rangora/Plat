@@ -2,22 +2,18 @@
 
 #pragma once
 
-#include "Plat.h"
-#include "blocks/Block.h"
-#include "blocks/BasicBlock.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Actor.h"
-#include "AvatarEquipment.generated.h"
+#include "Equipment.generated.h"
 
 UCLASS()
-class PLAT_API AAvatarEquipment : public AActor {
+class PLAT_API AEquipment : public AActor {
 	GENERATED_BODY()
 	
 public:	
-	AAvatarEquipment();	
+	AEquipment();
 
 	virtual void PostInitializeComponents() override;
-	void SetWeaponStaticMesh(const FString& ContentPath, const FString& Name);
+	bool SetWeaponStaticMesh(const FString& ContentPath, const FString& Name);
 	FString GetWeaponName();
 
 protected:
@@ -28,7 +24,7 @@ private:
 	UPROPERTY(VisibleAnywhere)
 		FString Name;
 
-public:	
+public:
 	UPROPERTY(VisibleAnywhere)
 		UStaticMeshComponent* StaticMeshComponent = nullptr;
 };

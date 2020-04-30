@@ -23,17 +23,20 @@ AAvatar::AAvatar() {
 
 	// Create Actor Character
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Avatar(
-		TEXT("/Game/resources/character/SK_CharM_Cardboard.SK_CharM_Cardboard"));
+		TEXT("/Game/resources/character/steve/steve.steve"));
+		//TEXT("/Game/resources/character/SK_CharM_Cardboard.SK_CharM_Cardboard"));
 	if (SK_Avatar.Succeeded())
 		GetMesh()->SetSkeletalMesh(SK_Avatar.Object);
 
 	static ConstructorHelpers::FClassFinder<UAnimInstance> AVATAR_ANIM(
-		TEXT("/Game/resources/character/AvatarAnimBlueprint.AvatarAnimBlueprint_C"));
+		TEXT("/Game/resources/character/steve/SteveAnimInstance.SteveAnimInstance_C"));
+		//TEXT("/Game/resources/character/AvatarAnimBlueprint.AvatarAnimBlueprint_C"));
 	if (AVATAR_ANIM.Succeeded())
 		GetMesh()->SetAnimInstanceClass(AVATAR_ANIM.Class);
 
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f)); // Set pivot
-	
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, 87.0f), FRotator(0.0f, 0.0f, 0.0f)); // Set pivot
+	GetMesh()->SetRelativeScale3D(FVector(0.25f, 0.25f, 0.25f));
+
 	// Collision
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Avatar"));
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AAvatar::PickupItem);
@@ -182,7 +185,7 @@ float AAvatar::GetHealthValue() {
 	return healthValue;
 }
 
-AAvatarEquipment* AAvatar::GetWeapon() {
+AEquipment* AAvatar::GetWeapon() {
 	return Weapon;
 }
 
@@ -190,7 +193,7 @@ UCameraComponent* AAvatar::GetCameraComponent() {
 	return CameraComponent;
 }
 
-void AAvatar::SetWeapon(AAvatarEquipment* NewWeapon) {
+void AAvatar::SetWeapon(AEquipment* NewWeapon) {
 	Weapon = NewWeapon;
 }
 

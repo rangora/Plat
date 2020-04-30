@@ -8,7 +8,8 @@ UAvatarAnimInstance::UAvatarAnimInstance() {
 	isAttacking = false;
 
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> ATTACK_MONTAGE(
-		TEXT("/Game/resources/character/SK_Mannequin_Skeleton_Montage.SK_Mannequin_Skeleton_Montage"));
+		TEXT("/Game/resources/character/steve/SteveAttackMontage.SteveAttackMontage"));
+		//TEXT("/Game/resources/character/SK_Mannequin_Skeleton_Montage.SK_Mannequin_Skeleton_Montage"));
 
 	if (ATTACK_MONTAGE.Succeeded())
 		AttackAnim = ATTACK_MONTAGE.Object;
@@ -27,6 +28,6 @@ void UAvatarAnimInstance::NativeUpdateAnimation(float deltaSeconds) {
 }
 
 void UAvatarAnimInstance::PlayAttackMontage() {
-	Montage_Play(AttackAnim, 1.0f);
+	Montage_Play(AttackAnim, 0.8f);
 	//BlueprintBeginPlay();
 }
