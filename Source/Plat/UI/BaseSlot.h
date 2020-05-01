@@ -34,5 +34,5 @@ public:
 		UImage* ThumbnailImage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FInventoryItem ItemData;
+		FBaseItemData ItemData;
 };

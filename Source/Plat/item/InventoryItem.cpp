@@ -3,34 +3,17 @@
 #include "InventoryItem.h"
 
 FInventoryItem::FInventoryItem() {
-	ItemName = FText::FromString("None");
-	Type = EItemType::NONE;
-	ItemID = "0";
-	Thumbnail = LoadObject<UTexture2D>(NULL, TEXT("/Game/resources/UI/InventorySlot.InventorySlot"), NULL, LOAD_None, NULL);
-	Description = FText::FromString("None");
+	Super();
 }
 
 FInventoryItem::FInventoryItem(const FInventoryItem& Item) {
-	ItemName = Item.ItemName;
-	Type = Item.Type;
-	ItemID = Item.ItemID;
-	Thumbnail = Item.Thumbnail;
-	Description = Item.Description;
+	Super();
 }
 
 void FInventoryItem::Clear() {
-	ItemName = FText::FromString("None");
-	Type = EItemType::NONE;
-	ItemID = "0";	
-	Thumbnail = LoadObject<UTexture2D>(NULL, TEXT("/Game/resources/UI/InventorySlot.InventorySlot"), NULL, LOAD_None, NULL);
-	Description = FText::FromString("None");
-
+	Super();
 }
 
 void FInventoryItem::SetThisItem(const FInventoryItem& Item) {
-	ItemName = Item.ItemName;
-	Type = Item.Type;
-	ItemID = Item.ItemID;
-	Thumbnail = Item.Thumbnail;
-	Description = Item.Description;
+	Super();
 }

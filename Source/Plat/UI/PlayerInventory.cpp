@@ -63,7 +63,7 @@ bool UPlayerInventory::SwapSlot(int leftIndex, int rightIndex) {
 	if (!IsValid(Slots[leftIndex]) || !IsValid(Slots[rightIndex]))
 		return false;
 	
-	FInventoryItem TempData(Slots[leftIndex]->ItemData);
+	FBaseItemData TempData(Slots[leftIndex]->ItemData);
 	bool TempAllocatable = Slots[leftIndex]->Allocatable;
 	int TempCount = Slots[leftIndex]->Count;	
 

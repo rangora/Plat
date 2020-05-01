@@ -4,6 +4,7 @@
 
 #include "Plat.h"
 #include "GameFramework/Actor.h"
+#include "item/CBaseItemData.h"
 #include "Engine/DataTable.h"
 #include "InventoryItem.generated.h"
 
@@ -12,36 +13,22 @@
  */
 
 UENUM(BlueprintType)
-enum class EItemType : uint8 {
+enum class EItemType_2 : uint8 {
 	NONE	UMETA(DisplayName = "None"), 
 	BLOCK	UMETA(DisplayName = "Block"),
 	FOOD	UMETA(DisplayName = "Food")
 };
 
 USTRUCT(BlueprintType)
-struct FInventoryItem : public FTableRowBase {
+struct FInventoryItem : public FBaseItemData {
 	GENERATED_BODY()
 
 public:
 	FInventoryItem();
 	FInventoryItem(const FInventoryItem& Item);
 	
-	void Clear();
+	virtual void Clear() override;
 	void SetThisItem(const FInventoryItem& Item);
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		EItemType Type;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FName ItemID;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FText ItemName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		UTexture2D* Thumbnail;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FText Description;
 };

@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AvatarController.h"
+#include "item/CEquipmentData.h"
 
 AAvatarController::AAvatarController() {
 	static ConstructorHelpers::FClassFinder<UPlayerInventory> UI_INVENTORY_C(
@@ -26,8 +27,26 @@ bool AAvatarController::AddItemToInventory(FName ID) {
 	if (!IsValid(GameState)) 
 		return false;
 	
-	UDataTable* ItemTable = GameState->GetItemDB();
-	FInventoryItem* ItemToAdd = ItemTable->FindRow<FInventoryItem>(ID, "");
+	// deprecated
+	//UDataTable* ItemTable = GameState->GetItemDB();
+	//FBaseItemData* ItemToAdd = ItemTable->FindRow<FBaseItemData>(ID, "");
+
+	// new
+	FBaseItemData* ItemToAdd;
+	FBaseItemData* ItemData = GameState->GetItemData(ID);
+	
+	switch (ItemData->ItemType) {
+	case EItemType::BLOCK:
+		ItemToAdd = Cast<FBaseItemData>(ItemData);
+		break;
+
+	case EItemType::EQUIPMENT:
+		ItemToAdd = Cast<FEquipmentData>(ItemData);
+		break;
+
+	default:
+		break;
+	}
 
 	int EmptyIndex = PlayerInventoryWidget->FindEmptySlot();
 

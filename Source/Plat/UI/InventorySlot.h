@@ -25,7 +25,7 @@ public:
 
 	void AddItemCount(int num);
 	bool RefreshQuickSlot();
-	bool SetNewItem(FInventoryItem NewItem);
+	bool SetNewItem(FBaseItemData NewItem);
 
 	virtual void NativeConstruct() override;
 	virtual bool UseItem() override;

@@ -5,6 +5,7 @@
 #include "system/AvatarController.h"
 #include "blocks/BasicBlock.h"
 #include "item/InventoryItem.h"
+#include "item/CBaseItemData.h"
 
 
 UInventorySlot::UInventorySlot(const FObjectInitializer& ObjectInitializer)
@@ -51,15 +52,15 @@ void UInventorySlot::Refresh() {
 }
 
 bool UInventorySlot::UseItem() {
-	switch (ItemData.Type) {
-	case EItemType::NONE:
-		return false;
-
+	switch (ItemData.ItemType) {
 	case EItemType::BLOCK:
 		if (!ABasicBlock::UseItem(IPlayer, IController, GetWorld(), ItemData.ItemName.ToString()))
 			return false;
 		break;
 		
+	case EItemType::EQUIPMENT:
+		break;
+
 	case EItemType::FOOD:
 		break;
 
@@ -159,7 +160,7 @@ FReply UInventorySlot::NativeOnMouseButtonUp(const FGeometry& InGeometry, const 
 	return reply.NativeReply;
 }
 
-bool UInventorySlot::SetNewItem(FInventoryItem NewItem) {	
+bool UInventorySlot::SetNewItem(FBaseItemData NewItem) {
 	ItemData.SetThisItem(NewItem);
 	Count = 1;
 	Allocatable = false;
