@@ -19,6 +19,7 @@ public:
 	ABasicBlock();
 
 	void DropItem();
+	void Restore();
 
 	virtual void PostInitializeComponents() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
@@ -34,4 +35,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 		class UBasicBlockComponent* BlockStat;
+
+
+
+private:
+	//float CrackingValue = 1.f;
 };

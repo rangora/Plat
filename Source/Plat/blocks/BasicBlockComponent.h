@@ -18,9 +18,8 @@ class PLAT_API UBasicBlockComponent : public UActorComponent {
 public:	
 	UBasicBlockComponent();
 	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
 	void SetDamage(float NewDamage);
+	void Restore();
 
 protected:
 	virtual void BeginPlay() override;

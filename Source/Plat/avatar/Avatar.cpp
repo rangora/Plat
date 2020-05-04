@@ -9,7 +9,7 @@ AAvatar::AAvatar() {
 	AttackRange = 200.;
 	interactRange = 600.;
 	AttackRadius = 50.;
-	attackPower = 50.;
+	attackPower = 10.;
 	healthValue = 1.0;
 
 	// Create SpringArmComponent
@@ -24,13 +24,13 @@ AAvatar::AAvatar() {
 	// Create Actor Character
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Avatar(
 		TEXT("/Game/resources/character/steve/steve.steve"));
-		//TEXT("/Game/resources/character/SK_CharM_Cardboard.SK_CharM_Cardboard"));
+
 	if (SK_Avatar.Succeeded())
 		GetMesh()->SetSkeletalMesh(SK_Avatar.Object);
 
 	static ConstructorHelpers::FClassFinder<UAnimInstance> AVATAR_ANIM(
 		TEXT("/Game/resources/character/steve/SteveAnimInstance.SteveAnimInstance_C"));
-		//TEXT("/Game/resources/character/AvatarAnimBlueprint.AvatarAnimBlueprint_C"));
+
 	if (AVATAR_ANIM.Succeeded())
 		GetMesh()->SetAnimInstanceClass(AVATAR_ANIM.Class);
 
@@ -105,13 +105,85 @@ void AAvatar::AttackCheck() {
 	}
 }
 
+void AAvatar::HitCheck() {
+	FVector Start = CameraComponent->GetComponentLocation();
+	FVector End = (CameraComponent->GetForwardVector() * AttackRange) + Start;
+
+	FHitResult HitResult;
+	FCollisionQueryParams Params(NAME_None, false, this);
+	bool bResult = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		FQuat::Identity,
+		ECollisionChannel::ECC_GameTraceChannel1,
+		FCollisionShape::MakeSphere(AttackRadius),
+		Params);
+
+
+	if (bResult) {
+		/*auto HitActor = HitResult.GetActor();
+
+		switch (HitActor->ThisType) {
+		case ActorType::CHARACTER :
+			break;
+
+		case ActorType::BLOCK :		
+			Target = Cast<ABasicBlock>(HitResult.GetActor());
+			break;
+		
+		default:
+			break;
+		}*/
+	}
+	else {
+		//Target->Restore();
+		Target = nullptr;
+	}
+}
+
+void AAvatar::OnHit() {
+	AttackAnim();
+	HitCheck();
+	
+	if (Target) {
+		bIsAtackking = true;
+		GetWorldTimerManager().SetTimer(AttackAnimTimer, this, &AAvatar::AttackAnim, 0.4f, true);
+		GetWorldTimerManager().SetTimer(BreakBlockTimer, this, &AAvatar::AttackingBlock, 0.3f, true);
+	}
+}
+
+void AAvatar::EndHit() {
+	GetWorldTimerManager().ClearTimer(AttackAnimTimer);
+	GetWorldTimerManager().ClearTimer(BreakBlockTimer);
+
+	bIsAtackking = false;
+
+	if (IsValid(Target)) {
+		Target->Restore();
+	}
+}
+
+void AAvatar::AttackingBlock() {
+	//HitCheck();
+	if (IsValid(Target)) {
+		FDamageEvent DamageEvent;
+		Target->TakeDamage(attackPower, DamageEvent, GetController(), this);
+	}
+	else {
+
+	}
+}
+
+void AAvatar::AttackAnim() {
+	ABAnim->PlayAttackMontage();
+}
+
 void AAvatar::Attack() {
 	if (isAttacking) return;
 
 	ABAnim->PlayAttackMontage();
 	isAttacking = true;
-
-	AttackCheck();
 }
 
 void AAvatar::UseItem() {
@@ -242,9 +314,6 @@ void AAvatar::ViewChange() {
 void AAvatar::PickupItem(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
 	AAutoPickup* Item = Cast<AAutoPickup>(OtherActor);
 
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-		FString::Printf(TEXT("ID:%s"), *Item->GetItemID().ToString()));
-
 	if (IsValid(Item)) {
 		auto IController = Cast<AAvatarController>(GetController());
 		if (IController->AddItemToInventory(Item->GetItemID()))
@@ -259,14 +328,16 @@ void AAvatar::Tick(float DeltaTime) {
 	CheckForInteractables();
 }
 
-// Called to bind functionality to input
 void AAvatar::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &AAvatar::Jump);
-	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AAvatar::Attack);
 	PlayerInputComponent->BindAction(TEXT("UseItem"), EInputEvent::IE_Pressed, this, &AAvatar::UseItem);
 	PlayerInputComponent->BindAction(TEXT("ViewChange"), EInputEvent::IE_Pressed, this, &AAvatar::ViewChange);
+
+	//PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AAvatar::Attack);
+	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AAvatar::OnHit);
+	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Released, this, &AAvatar::EndHit);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &AAvatar::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &AAvatar::LeftRight);

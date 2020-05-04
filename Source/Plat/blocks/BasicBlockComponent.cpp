@@ -19,9 +19,7 @@ void UBasicBlockComponent::BeginPlay() {
 }
 
 
-void UBasicBlockComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
+
 
 void UBasicBlockComponent::SetDamage(float NewDamage) {
 	currentHP = FMath::Clamp<float>(currentHP - NewDamage, 0.f, maxHP);
@@ -29,5 +27,9 @@ void UBasicBlockComponent::SetDamage(float NewDamage) {
 	if (currentHP <= 0.f) {
 		OnHPIsZero.Broadcast();
 	}
+}
+
+void UBasicBlockComponent::Restore() {
+	currentHP = maxHP;
 }
 

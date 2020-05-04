@@ -11,6 +11,7 @@
 /**
  * 
  */
+
 UCLASS()
 class PLAT_API ASandBoxState : public AGameStateBase {
 	GENERATED_BODY()

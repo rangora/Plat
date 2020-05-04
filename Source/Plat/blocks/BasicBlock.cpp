@@ -7,6 +7,9 @@
 #include "item/AutoPickup.h"
 
 ABasicBlock::ABasicBlock() {
+	Super::Name = "BasicBlock";
+	//Super::ThisType = ActorType::BLOCK;
+
 	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh"));
 	BlockStat = CreateDefaultSubobject<UBasicBlockComponent>(TEXT("BlockStat"));
 	RootComponent = Cast<USceneComponent>(BlockMesh);
@@ -14,7 +17,6 @@ ABasicBlock::ABasicBlock() {
 	BlockMesh->SetCollisionProfileName(TEXT("Block"));	
 
 	ItemID = FName("NO_ID");
-	Super::Name = "BasicBlock";
 }
 
 void ABasicBlock::DropItem() {
@@ -32,6 +34,18 @@ void ABasicBlock::DropItem() {
 	}
 }
 
+void ABasicBlock::Restore() {
+	BlockStat->Restore();
+
+	auto Meterials = BlockMesh->GetMaterials();
+	TArray<UMaterialInstanceDynamic*> Instances;
+
+	for (int i = 0; i < Meterials.Num(); ++i) {
+		Instances.Add(BlockMesh->CreateDynamicMaterialInstance(i, Meterials[i]));
+		Instances[i]->SetScalarParameterValue(FName("CrackingValue"), 1.0f);
+	}
+}
+
 void ABasicBlock::PostInitializeComponents() {
 	Super::PostInitializeComponents();
 
@@ -44,6 +58,16 @@ void ABasicBlock::PostInitializeComponents() {
 
 float ABasicBlock::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
 	float finalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	float CrackingValue = BlockStat->currentHP / 100.f;
+	auto Meterials = BlockMesh->GetMaterials();
+	TArray<UMaterialInstanceDynamic*> Instances;
+
+	for (int i = 0; i < Meterials.Num(); ++i) {
+		Instances.Add(BlockMesh->CreateDynamicMaterialInstance(i, Meterials[i]));
+		Instances[i]->SetScalarParameterValue(FName("CrackingValue"), CrackingValue);
+	}
+
 
 	BlockStat->SetDamage(finalDamage);
 	return finalDamage;

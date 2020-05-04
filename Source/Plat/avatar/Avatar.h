@@ -13,6 +13,8 @@
 #include "item/InventoryItem.h"
 #include "item/Equipment.h"
 #include "system/AvatarController.h"
+#include "blocks/BasicBlock.h"
+#include "TimerManager.h"
 #include "UI/ScreenUI.h"
 #include "Avatar.generated.h"
 
@@ -59,6 +61,13 @@ private:
 	void Turn(float newAxisValue);
 
 	void AttackCheck();
+	void HitCheck();
+	void OnHit();
+	void EndHit();
+
+	void AttackingBlock();
+
+	void AttackAnim();
 
 	UFUNCTION()
 		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
@@ -68,6 +77,13 @@ public:
 	float interactRange;
 
 private:
+	bool bIsAtackking;
+
+	FTimerHandle BreakBlockTimer;
+	FTimerHandle AttackAnimTimer;
+
+	ABasicBlock* Target;
+
 	// for UI..
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", Meta = (AllowPrivateAccess = true))
 		float healthValue;
