@@ -22,10 +22,6 @@ struct FBaseItemData : public FTableRowBase {
 
 public:
 	FBaseItemData();
-	FBaseItemData(const FBaseItemData& Item);
-
-	virtual void Clear();
-	void SetThisItem(const FBaseItemData& Item);
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

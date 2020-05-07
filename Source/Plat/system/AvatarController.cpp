@@ -1,8 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AvatarController.h"
-#include "Item/CBaseItemData.h"
-#include "item/CEquipmentData.h"
+
 
 AAvatarController::AAvatarController() {
 	static ConstructorHelpers::FClassFinder<UPlayerInventory> UI_INVENTORY_C(
@@ -22,39 +21,13 @@ void AAvatarController::PostInitializeComponents() {
 	Super::PostInitializeComponents();
 }
 
-bool AAvatarController::AddItemToInventory(FName ID) {
-	ASandBoxState* GameState = Cast<ASandBoxState>(GetWorld()->GetGameState());
-
-	if (!IsValid(GameState)) 
-		return false;
-	
-	// deprecated
-	UDataTable* ItemTable = GameState->GetItemDB();
-	FBaseItemData* ItemToAdd = ItemTable->FindRow<FBaseItemData>(ID, "");
-
-	//// new
-	//FBaseItemData* ItemToAdd;
-	//FBaseItemData* ItemData = GameState->GetItemData(ID);
-	//
-	//switch (ItemData->ItemType) {
-	//case EItemType::BLOCK:
-	//	ItemToAdd = ItemData;
-	//	break;
-
-	//case EItemType::EQUIPMENT:
-	//	ItemToAdd = static_cast<FEquipmentData>(&ItemData);
-	//	break;
-
-	//default:
-	//	break;
-	//}
-
+bool AAvatarController::AddItemToInventory(FName ID) {	
 	int EmptyIndex = PlayerInventoryWidget->FindEmptySlot();
 
 	// Check for empty slot and validation.
-	if (ItemToAdd && EmptyIndex >= 0) {
+	if (EmptyIndex >= 0) {
 		// Find slot if it is a item that already exists.
-		int ExistItemIndex = PlayerInventoryWidget->FindItemInSlots(ItemToAdd->ItemID);
+		int ExistItemIndex = PlayerInventoryWidget->FindItemInSlots(ID);
 		
 		// Exist..
 		if (ExistItemIndex >= 0) {
@@ -63,7 +36,7 @@ bool AAvatarController::AddItemToInventory(FName ID) {
 		}
 		// Doesn't exist..
 		else
-			PlayerInventoryWidget->Slots[EmptyIndex]->SetNewItem(*ItemToAdd);
+			PlayerInventoryWidget->Slots[EmptyIndex]->SetNewItem(ID);
 
 		return true;
 	}
@@ -134,19 +107,19 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 	int inputIndex;
 
 	if (Input.Equals("One")) {
-		ItemName = ScreenUIWidget->QuickSlots[0]->LinkedSlot->ItemData.ItemName.ToString();
+		ItemName = ScreenUIWidget->QuickSlots[0]->LinkedSlot->ItemName;
 		inputIndex = 0;
 	}
 	else if (Input.Equals("Two")) {
-		ItemName = ScreenUIWidget->QuickSlots[1]->LinkedSlot->ItemData.ItemName.ToString();
+		ItemName = ScreenUIWidget->QuickSlots[1]->LinkedSlot->ItemName;
 		inputIndex = 1;
 	}
 	else if (Input.Equals("Three")) {
-		ItemName = ScreenUIWidget->QuickSlots[2]->LinkedSlot->ItemData.ItemName.ToString();
+		ItemName = ScreenUIWidget->QuickSlots[2]->LinkedSlot->ItemName;
 		inputIndex = 2;
 	}
 	else if (Input.Equals("Four")) {
-		ItemName = ScreenUIWidget->QuickSlots[3]->LinkedSlot->ItemData.ItemName.ToString();
+		ItemName = ScreenUIWidget->QuickSlots[3]->LinkedSlot->ItemName;
 		inputIndex = 3;
 	}
 
@@ -154,7 +127,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 	if (ItemName.Equals("None")) {
 		if (ScreenUIWidget->GetUsingIndex() != -1) {
 			ScreenUIWidget->QuickSlots[ScreenUIWidget->GetUsingIndex()]->ShowBorder(false);
-			IPlayer->SetWeapon(nullptr);
+			IPlayer->DisarmWeapon();
 			ScreenUIWidget->SetUsingIndex(-1);
 		}
 		return;
@@ -163,7 +136,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 	else if (ScreenUIWidget->GetUsingIndex() == inputIndex) {
 		ScreenUIWidget->SetUsingIndex(-1);
 		ScreenUIWidget->QuickSlots[inputIndex]->ShowBorder(false);
-		IPlayer->SetWeapon(nullptr);
+		IPlayer->DisarmWeapon();
 		return;
 	}
 	// QuickSlot of input index has an item.
@@ -171,9 +144,10 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 		// Remove weapon's static mesh if there are pre-behavior.
 		if (ScreenUIWidget->GetUsingIndex() > -1) {
 			ScreenUIWidget->QuickSlots[ScreenUIWidget->GetUsingIndex()]->ShowBorder(false);
-			IPlayer->SetWeapon(nullptr);
+			IPlayer->DisarmWeapon();
 		}
 
+		// Only equipment visible static mesh.
 		ScreenUIWidget->SetUsingIndex(inputIndex);
 		ScreenUIWidget->QuickSlots[inputIndex]->ShowBorder(true);
 		FString Path = "/Game/resources/equipment/";
@@ -190,7 +164,10 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 			WeaponActor->AttachToComponent(IPlayer->GetMesh(),
 				FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 
-			IPlayer->SetWeapon(WeaponActor);
+			FName ItemID = ScreenUIWidget->QuickSlots[ScreenUIWidget->GetUsingIndex()]->LinkedSlot->ItemID;
+		
+			// Give atrributes to player in accordance with equipment.
+			IPlayer->SetWeapon(WeaponActor, ItemID);
 		}
 	}
 }

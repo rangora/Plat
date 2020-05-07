@@ -4,11 +4,12 @@
 
 #include "Blueprint/UserWidget.h"
 #include "UI/BaseUI.h"
-#include "item/InventoryItem.h"
+#include "system/SandBoxState.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "BaseSlot.generated.h"
 
+enum class EItemType : uint8;
 
 UCLASS()
 class PLAT_API UBaseSlot : public UBaseUI {
@@ -17,10 +18,21 @@ class PLAT_API UBaseSlot : public UBaseUI {
 public:
 	UBaseSlot(const FObjectInitializer& ObjectInitializer);
 
+	bool SetThisTextureToThumbnail(UTexture2D* Texture);
+	void Clear();
 	virtual void Refresh();
 	virtual bool UseItem();
 
 public:
+	UPROPERTY(VisibleAnywhere)
+		FName ItemID;
+
+	UPROPERTY(VisibleAnywhere)
+		EItemType ItemType;
+
+	UPROPERTY(VisibleAnywhere)
+		FString ItemName;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool Allocatable;
 
@@ -33,6 +45,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 		UImage* ThumbnailImage;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FBaseItemData ItemData;
+	UTexture2D* DefaultTexture;
+	UTexture2D* CurrentTexture;
 };

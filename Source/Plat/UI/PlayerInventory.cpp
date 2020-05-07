@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerInventory.h"
-#include "item/InventoryItem.h"
 #include "system/AvatarController.h"
 #include "system/SandBoxState.h"
 
@@ -52,7 +51,7 @@ FReply UPlayerInventory::NativeOnKeyDown(const FGeometry& MyGeometry, const FKey
 
 int UPlayerInventory::FindItemInSlots(FName ItemID) {
 	for (int i = 0; i < Slots.Num(); i++) {
-		if (Slots[i]->ItemData.ItemID == ItemID) 
+		if(Slots[i]->ItemID == ItemID)
 			return i;
 	}
 
@@ -63,21 +62,27 @@ bool UPlayerInventory::SwapSlot(int leftIndex, int rightIndex) {
 	if (!IsValid(Slots[leftIndex]) || !IsValid(Slots[rightIndex]))
 		return false;
 	
-	FBaseItemData TempData(Slots[leftIndex]->ItemData);
-	bool TempAllocatable = Slots[leftIndex]->Allocatable;
-	int TempCount = Slots[leftIndex]->Count;	
-
-	// Change ItemData struct.
-	Slots[leftIndex]->ItemData.SetThisItem(Slots[rightIndex]->ItemData);
-	Slots[rightIndex]->ItemData.SetThisItem(TempData);
-
-	// Change extra info.
-	Slots[leftIndex]->Allocatable = Slots[rightIndex]->Allocatable;
-	Slots[leftIndex]->Count = Slots[rightIndex]->Count;
-	Slots[rightIndex]->Allocatable = TempAllocatable;
-	Slots[rightIndex]->Count = TempCount;
+	FName TempID			= Slots[leftIndex]->ItemID;
+	EItemType TempType	    = Slots[leftIndex]->ItemType;
+	FString TempName		= Slots[leftIndex]->ItemName;
+	int TempCount		    = Slots[leftIndex]->Count;
+	bool TempAllocatable    = Slots[leftIndex]->Allocatable;
+	UTexture2D* TempTexture = Slots[leftIndex]->CurrentTexture;
 	
+	Slots[leftIndex]->ItemID		 = Slots[rightIndex]->ItemID;
+	Slots[leftIndex]->ItemType		 = Slots[rightIndex]->ItemType;
+	Slots[leftIndex]->ItemName		 = Slots[rightIndex]->ItemName;
+	Slots[leftIndex]->Count			 = Slots[rightIndex]->Count;
+	Slots[leftIndex]->Allocatable	 = Slots[rightIndex]->Allocatable;
+	Slots[leftIndex]->CurrentTexture = Slots[rightIndex]->CurrentTexture;
 
+	Slots[rightIndex]->ItemID			 = TempID;
+	Slots[rightIndex]->ItemType			 = TempType;
+	Slots[rightIndex]->ItemName			 = TempName;
+	Slots[rightIndex]->Count			 = TempCount;
+	Slots[rightIndex]->Allocatable		 = TempAllocatable;
+	Slots[rightIndex]->CurrentTexture	 = TempTexture;
+	
 	Slots[leftIndex]->Refresh();
 	Slots[rightIndex]->Refresh();
 

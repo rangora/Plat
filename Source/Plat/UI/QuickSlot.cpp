@@ -31,7 +31,7 @@ void UQuickSlot::Refresh() {
 			ItemCount->SetVisibility(ESlateVisibility::Hidden);
 			ShowBorder(false);
 		}
-		ThumbnailImage->SetBrushFromTexture(LinkedSlot->ItemData.Thumbnail);
+		ThumbnailImage->SetBrushFromTexture(LinkedSlot->CurrentTexture);
 	}
 
 }

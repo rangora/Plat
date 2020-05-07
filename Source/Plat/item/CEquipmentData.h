@@ -3,7 +3,8 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "item/CBaseItemData.h"
+#include "Engine/DataTable.h"
+#include "item/CBlockData.h"
 #include "CEquipmentData.generated.h"
 
 
@@ -16,19 +17,15 @@ enum class EEQuipmentDetail : uint8 {
 
 
 USTRUCT(BlueprintType)
-struct FEquipmentData : public FBaseItemData {
+struct FEquipmentData : public FTableRowBase {
 	GENERATED_BODY()
 
 public:
-	FEquipmentData();
-	FEquipmentData(const FEquipmentData& Item);
-
-	virtual void Clear() override;
-	void SetThisItem(const FEquipmentData& Item);
-
-public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		EEQuipmentDetail DetailType;
+		FName ItemID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		EMatch Match;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName AdventageTarget;

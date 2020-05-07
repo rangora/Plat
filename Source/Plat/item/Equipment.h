@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "item/CBlockData.h"
 #include "Equipment.generated.h"
 
 UCLASS()
@@ -25,6 +26,13 @@ private:
 		FString Name;
 
 public:
+	float damage;
+
+	float adDamage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		EMatch Match;
+
 	UPROPERTY(VisibleAnywhere)
-		UStaticMeshComponent* StaticMeshComponent = nullptr;
+		UStaticMeshComponent* StaticMeshComponent;
 };

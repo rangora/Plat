@@ -10,7 +10,6 @@
 #include "Components/BoxComponent.h"
 #include "item/Interactable.h"
 #include "item/AutoPickup.h"
-#include "item/InventoryItem.h"
 #include "item/Equipment.h"
 #include "system/AvatarController.h"
 #include "blocks/BasicBlock.h"
@@ -18,7 +17,6 @@
 #include "UI/ScreenUI.h"
 #include "Avatar.generated.h"
 
-enum class ViewState {FIRSTPERSON, THIRDPERSON};
 
 UCLASS()
 class PLAT_API AAvatar : public ACharacter {
@@ -43,9 +41,10 @@ public:
 
 	float GetHealthValue();
 	AEquipment* GetWeapon();
+	
 	UCameraComponent* GetCameraComponent();
-	void SetWeapon(AEquipment* NewWeapon);
-
+	void SetWeapon(AEquipment* NewWeapon, FName ID);
+	void DisarmWeapon();
 
 	UFUNCTION()
 		void PickupItem(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -55,17 +54,17 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	const float BASEATTACKPOWER = 10.f;
+	enum class ViewState { FIRSTPERSON, THIRDPERSON };
+
 	void UpDown(float newAxisValue);
 	void LeftRight(float newAxisValue);
 	void LookUp(float newAxisValue);
 	void Turn(float newAxisValue);
 
-	void AttackCheck();
-	void HitCheck();
+	void AttackTarget();
 	void OnHit();
 	void EndHit();
-
-	void AttackingBlock();
 
 	void AttackAnim();
 
@@ -82,7 +81,7 @@ private:
 	FTimerHandle BreakBlockTimer;
 	FTimerHandle AttackAnimTimer;
 
-	ABasicBlock* Target;
+	ABasicBlock* TargetBlock;
 
 	// for UI..
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", Meta = (AllowPrivateAccess = true))

@@ -8,7 +8,6 @@
 
 ABasicBlock::ABasicBlock() {
 	Super::Name = "BasicBlock";
-	//Super::ThisType = ActorType::BLOCK;
 
 	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh"));
 	BlockStat = CreateDefaultSubobject<UBasicBlockComponent>(TEXT("BlockStat"));
@@ -17,6 +16,7 @@ ABasicBlock::ABasicBlock() {
 	BlockMesh->SetCollisionProfileName(TEXT("Block"));	
 
 	ItemID = FName("NO_ID");
+	Match = EMatch::NONE;
 }
 
 void ABasicBlock::DropItem() {

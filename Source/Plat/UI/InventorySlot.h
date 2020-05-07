@@ -5,16 +5,12 @@
 #include "Plat.h"
 #include "Blueprint/UserWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
-#include "item/InventoryItem.h"
 #include "UI/BaseSlot.h"
-#include "UI/DragDropSlot.h"
 #include "InventorySlot.generated.h"
-
 
 /**
  *
  */
-
 
 UCLASS()
 class PLAT_API UInventorySlot : public UBaseSlot {
@@ -25,7 +21,7 @@ public:
 
 	void AddItemCount(int num);
 	bool RefreshQuickSlot();
-	bool SetNewItem(FBaseItemData NewItem);
+	bool SetNewItem(FName ID);
 
 	virtual void NativeConstruct() override;
 	virtual bool UseItem() override;

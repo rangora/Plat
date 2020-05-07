@@ -5,7 +5,6 @@
 #include "Plat.h"
 #include "GameFramework/PlayerController.h"
 #include "item/Interactable.h"
-#include "item/InventoryItem.h"
 #include "item/Equipment.h"
 #include "system/SandBoxState.h"
 #include "avatar/Avatar.h"

@@ -19,15 +19,16 @@ class PLAT_API ASandBoxState : public AGameStateBase {
 public:
 	ASandBoxState();
 	
-	UDataTable* GetItemDB() const;
+	UDataTable* GetBaseDB() const;
+	UDataTable* GetBlockDB() const;
 	UDataTable* GetEquipmentDB() const;
 
-	FBaseItemData* GetItemData(FName ID);
-
-protected:
 	UPROPERTY(EditDefaultsOnly)
-		class UDataTable* ItemDB;
+		class UDataTable* BaseDB;
 
 	UPROPERTY(EditDefaultsOnly)
 		class UDataTable* EquipmentDB;
+
+	UPROPERTY(EditDefaultsOnly)
+		class UDataTable* BlockDB;
 };

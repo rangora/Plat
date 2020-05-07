@@ -20,6 +20,7 @@ public:
 	virtual void Refresh() override;
 	virtual bool UseItem() override;
 	
+	/* This function will be called in CreateInventory() of AvatarController. */
 	void InitQuickSlots(class UInventorySlot* Slot);
 	void ShowBorder(bool isInUsed);
 	

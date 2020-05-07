@@ -5,11 +5,14 @@
 #include "Plat.h"
 #include "blocks/Block.h"
 #include "blocks/BasicBlockComponent.h"
+#include "item/CBlockData.h"
 #include "BasicBlock.generated.h"
 
 /**
  * 
  */
+
+
 
 UCLASS()
 class PLAT_API ABasicBlock : public ABlock {
@@ -26,6 +29,10 @@ public:
 
 	static bool UseItem(ACharacter* Player, APlayerController* Contrller, UWorld* World, FString BlockName);
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		EMatch Match;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName ItemID;
@@ -36,8 +43,4 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 		class UBasicBlockComponent* BlockStat;
 
-
-
-private:
-	//float CrackingValue = 1.f;
 };

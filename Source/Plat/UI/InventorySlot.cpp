@@ -4,8 +4,9 @@
 #include "avatar/Avatar.h"
 #include "system/AvatarController.h"
 #include "blocks/BasicBlock.h"
-#include "item/InventoryItem.h"
-#include "item/CBaseItemData.h"
+#include "UI/DragDropSlot.h"
+#include "Item/CBlockData.h"
+#include "item/CEquipmentData.h"
 
 
 UInventorySlot::UInventorySlot(const FObjectInitializer& ObjectInitializer)
@@ -13,12 +14,11 @@ UInventorySlot::UInventorySlot(const FObjectInitializer& ObjectInitializer)
 	Allocatable = true;
 	Count = -1;
 	Index = -1;
-	ItemData.Clear();
 }
 
 void UInventorySlot::NativeConstruct() {
 	Super::NativeConstruct();
-	ThumbnailImage->SetBrushFromTexture(ItemData.Thumbnail);
+	SetThisTextureToThumbnail(CurrentTexture);
 }
 
 void UInventorySlot::AddItemCount(int num) {
@@ -38,32 +38,30 @@ bool UInventorySlot::RefreshQuickSlot() {
 }
 
 void UInventorySlot::Refresh() {
-	Super::Refresh();
 	if (Count > 1) {
 		ItemCount->SetVisibility(ESlateVisibility::Visible);
 	}
 	else if (Count == 1)
 		ItemCount->SetVisibility(ESlateVisibility::Hidden);
 	else {
-		ItemData.Clear();
+		Clear();
 		ItemCount->SetVisibility(ESlateVisibility::Hidden);
 	}
-	ThumbnailImage->SetBrushFromTexture(ItemData.Thumbnail);
+	SetThisTextureToThumbnail(CurrentTexture);
 }
 
 bool UInventorySlot::UseItem() {
-	switch (ItemData.ItemType) {
+	switch (ItemType) {
 	case EItemType::BLOCK:
-		if (!ABasicBlock::UseItem(IPlayer, IController, GetWorld(), ItemData.ItemName.ToString()))
+		if (!ABasicBlock::UseItem(IPlayer, IController, GetWorld(), ItemName))
 			return false;
-		break;
-		
-	case EItemType::EQUIPMENT:
 		break;
 
 	case EItemType::FOOD:
 		break;
 
+	case EItemType::EQUIPMENT:
+	
 	default: 
 		return false;
 	}
@@ -90,7 +88,8 @@ void UInventorySlot::NativeOnDragDetected(const FGeometry& InGeometry, const FPo
 		OutOperation = oper;
 	
 		if (DragImageWidget) {
-			DragImageWidget->ItemData.Thumbnail = this->ItemData.Thumbnail;
+			//DragImageWidget->ItemData.Thumbnail = this->ItemData.Thumbnail;
+			DragImageWidget->CurrentTexture = this->CurrentTexture;
 			DragImageWidget->Allocatable = false;
 			oper->DefaultDragVisual = DragImageWidget;
 		}	
@@ -126,7 +125,7 @@ bool UInventorySlot::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 	if (slot1 == usingIndex + QuickStart || slot2 == usingIndex + QuickStart) {
 		if (IPlayer->GetWeapon() != nullptr) {
 			IController->ScreenUIWidget->SetUsingIndex(-1);
-			IPlayer->GetWeapon()->Destroy();
+			IPlayer->DisarmWeapon();
 		}
 	}
 
@@ -160,10 +159,30 @@ FReply UInventorySlot::NativeOnMouseButtonUp(const FGeometry& InGeometry, const 
 	return reply.NativeReply;
 }
 
-bool UInventorySlot::SetNewItem(FBaseItemData NewItem) {
-	ItemData.SetThisItem(NewItem);
-	Count = 1;
+bool UInventorySlot::SetNewItem(FName ID) {
+	auto IState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+	FBaseItemData* BaseData = IState->BaseDB->FindRow<FBaseItemData>(ID, "");
+
+	switch (BaseData->ItemType) {
+	case EItemType::EQUIPMENT:
+		ItemType = EItemType::EQUIPMENT;
+		break;
+
+	case EItemType::BLOCK:
+		ItemType = EItemType::BLOCK;
+		break;
+
+	case EItemType::NONE:
+
+	default:
+		return false;
+	}
+
+	CurrentTexture = BaseData->Thumbnail;
+	ItemName = BaseData->ItemName.ToString();
+	ItemID = ID;
 	Allocatable = false;
+	Count = 1;
 	Refresh();
 
 	return true;

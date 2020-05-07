@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Avatar.h"
+#include "item/CEquipmentData.h"
 #include "DrawDebugHelpers.h"
+
 
 AAvatar::AAvatar() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -11,6 +13,7 @@ AAvatar::AAvatar() {
 	AttackRadius = 50.;
 	attackPower = 10.;
 	healthValue = 1.0;
+	//ThisType = ActorType::CHARACTER;
 
 	// Create SpringArmComponent
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
@@ -83,29 +86,7 @@ void AAvatar::Turn(float newAxisValue) {
 	AddControllerYawInput(newAxisValue);
 }
 
-void AAvatar::AttackCheck() {
-	FVector Start = CameraComponent->GetComponentLocation();
-	FVector End = (CameraComponent->GetForwardVector() * AttackRange) + Start;
-
-	FHitResult HitResult;
-	FCollisionQueryParams Params(NAME_None, false, this);
-	bool bResult = GetWorld()->SweepSingleByChannel(
-		HitResult,
-		Start,
-		End,
-		FQuat::Identity,
-		ECollisionChannel::ECC_GameTraceChannel1,
-		FCollisionShape::MakeSphere(AttackRadius),
-		Params);
-
-	if (bResult) {
-		FDamageEvent DamageEvent;
-		HitResult.Actor->TakeDamage(attackPower, DamageEvent, GetController(), this);
-		this->healthValue -= 0.1f;
-	}
-}
-
-void AAvatar::HitCheck() {
+void AAvatar::AttackTarget() {
 	FVector Start = CameraComponent->GetComponentLocation();
 	FVector End = (CameraComponent->GetForwardVector() * AttackRange) + Start;
 
@@ -122,34 +103,45 @@ void AAvatar::HitCheck() {
 
 
 	if (bResult) {
-		/*auto HitActor = HitResult.GetActor();
+		auto HitActor = HitResult.GetActor();
 
-		switch (HitActor->ThisType) {
-		case ActorType::CHARACTER :
-			break;
+		if (TargetBlock != nullptr &&
+			HitActor != TargetBlock)
+			TargetBlock->Restore();
 
-		case ActorType::BLOCK :		
-			Target = Cast<ABasicBlock>(HitResult.GetActor());
-			break;
-		
-		default:
-			break;
-		}*/
+		// If target is block.
+		TargetBlock = Cast<ABasicBlock>(HitActor);
+		if (IsValid(TargetBlock)) {
+			FDamageEvent DamageEvent;
+			float amountDamage = BASEATTACKPOWER;
+			
+			if (Weapon != nullptr) {
+				amountDamage = Weapon->damage;
+
+				if (Weapon->Match == TargetBlock->Match) {
+					amountDamage = Weapon->adDamage;
+				}
+			}
+			HitActor->TakeDamage(amountDamage, DamageEvent, GetController(), this);
+		}
+
 	}
 	else {
-		//Target->Restore();
-		Target = nullptr;
+		if (IsValid(TargetBlock)) {
+			TargetBlock->Restore();
+			TargetBlock = nullptr;
+		}
 	}
 }
 
 void AAvatar::OnHit() {
 	AttackAnim();
-	HitCheck();
+	AttackTarget();
 	
-	if (Target) {
+	if (TargetBlock) {
 		bIsAtackking = true;
 		GetWorldTimerManager().SetTimer(AttackAnimTimer, this, &AAvatar::AttackAnim, 0.4f, true);
-		GetWorldTimerManager().SetTimer(BreakBlockTimer, this, &AAvatar::AttackingBlock, 0.3f, true);
+		GetWorldTimerManager().SetTimer(BreakBlockTimer, this, &AAvatar::AttackTarget, 0.3f, true);
 	}
 }
 
@@ -158,20 +150,8 @@ void AAvatar::EndHit() {
 	GetWorldTimerManager().ClearTimer(BreakBlockTimer);
 
 	bIsAtackking = false;
-
-	if (IsValid(Target)) {
-		Target->Restore();
-	}
-}
-
-void AAvatar::AttackingBlock() {
-	//HitCheck();
-	if (IsValid(Target)) {
-		FDamageEvent DamageEvent;
-		Target->TakeDamage(attackPower, DamageEvent, GetController(), this);
-	}
-	else {
-
+	if (IsValid(TargetBlock)) {
+		TargetBlock->Restore();
 	}
 }
 
@@ -265,8 +245,23 @@ UCameraComponent* AAvatar::GetCameraComponent() {
 	return CameraComponent;
 }
 
-void AAvatar::SetWeapon(AEquipment* NewWeapon) {
-	Weapon = NewWeapon;
+void AAvatar::SetWeapon(AEquipment* NewWeapon, FName ID) {
+	auto IState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+	FEquipmentData* Equipment = IState->EquipmentDB->FindRow<FEquipmentData>(ID, "");
+
+	if (Equipment != nullptr) {
+		Weapon = NewWeapon;
+		Weapon->damage = Equipment->Damage;
+		Weapon->adDamage = Equipment->AdDamage;
+		Weapon->Match = Equipment->Match;
+	}
+}
+
+void AAvatar::DisarmWeapon() {
+	if(Weapon)
+		Weapon->Destroy();
+	Weapon = nullptr;
+	attackPower = BASEATTACKPOWER;
 }
 
 void AAvatar::BeginPlay() {
