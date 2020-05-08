@@ -1,25 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "BasicBlockComponent.h"
-
 
 UBasicBlockComponent::UBasicBlockComponent() {
 	PrimaryComponentTick.bCanEverTick = false;
 	bWantsInitializeComponent = true;
 
 	currentHP = maxHP = 100.f;
-	
 }
-
 
 // Called when the game starts
 void UBasicBlockComponent::BeginPlay() {
 	Super::BeginPlay();
 }
-
-
-
 
 void UBasicBlockComponent::SetDamage(float NewDamage) {
 	currentHP = FMath::Clamp<float>(currentHP - NewDamage, 0.f, maxHP);
@@ -32,4 +25,3 @@ void UBasicBlockComponent::SetDamage(float NewDamage) {
 void UBasicBlockComponent::Restore() {
 	currentHP = maxHP;
 }
-

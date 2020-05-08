@@ -8,7 +8,7 @@
 #include "ScreenUI.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class PLAT_API UScreenUI : public UBaseUI {

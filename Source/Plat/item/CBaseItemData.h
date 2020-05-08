@@ -6,7 +6,6 @@
 #include "Engine/DataTable.h"
 #include "CBaseItemData.generated.h"
 
-
 UENUM(BlueprintType)
 enum class EItemType : uint8 {
 	NONE		UMETA(DisplayName = "None"),
@@ -14,7 +13,6 @@ enum class EItemType : uint8 {
 	BLOCK		UMETA(DisplayName = "Block"),
 	FOOD		UMETA(DisplayName = "Food")
 };
-
 
 USTRUCT(BlueprintType)
 struct FBaseItemData : public FTableRowBase {
@@ -26,7 +24,7 @@ public:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName ItemID;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FText ItemName;
 

@@ -9,15 +9,13 @@
 #include "BasicBlock.generated.h"
 
 /**
- * 
+ *
  */
-
-
 
 UCLASS()
 class PLAT_API ABasicBlock : public ABlock {
 	GENERATED_BODY()
-	
+
 public:
 	ABasicBlock();
 
@@ -30,10 +28,12 @@ public:
 	static bool UseItem(ACharacter* Player, APlayerController* Contrller, UWorld* World, FString BlockName);
 
 public:
+	/* If is equal with 'Match' int weapon class, this block get huge damage. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		EMatch Match;
 
 protected:
+	/* Unique value. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName ItemID;
 
@@ -42,5 +42,4 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 		class UBasicBlockComponent* BlockStat;
-
 };

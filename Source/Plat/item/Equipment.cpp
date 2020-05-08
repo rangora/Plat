@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Equipment.h"
 
 AEquipment::AEquipment() {
@@ -24,8 +23,6 @@ bool AEquipment::SetWeaponStaticMesh(const FString& ContentPath, const FString& 
 	UStaticMesh* StaticMesh = Cast<UStaticMesh>(StaticLoadObject(
 		UStaticMesh::StaticClass(), NULL, *ContentPath));
 
-	
-
 	if (IsValid(StaticMesh)) {
 		StaticMeshComponent->SetStaticMesh(StaticMesh);
 		FVector CurrentScale = StaticMeshComponent->GetRelativeScale3D();
@@ -43,6 +40,3 @@ FString AEquipment::GetWeaponName() {
 void AEquipment::BeginPlay() {
 	Super::BeginPlay();
 }
-
-
-

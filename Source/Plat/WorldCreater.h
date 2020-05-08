@@ -20,14 +20,14 @@ public:
 	void CreateHeight(FVector position, int height);
 	virtual void BeginPlay() override;
 
-private:	
+private:
 	float fade(float t);
 	float lerp(float t, float a, float b);
 	float grad(int hash, float x, float y, float z);
 	float noise(float x, float y);
 	int octave(int x, int y);
 
-	void similar_k_means();	
+	void similar_k_means();
 
 public:
 	FVector _Position;

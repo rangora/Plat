@@ -132,7 +132,7 @@ AWorldCreater::AWorldCreater() {
 	PrimaryActorTick.bCanEverTick = false;
 	float x{};
 	float y{};
-	
+
 	_Position = FVector::ZeroVector;
 	//DirtBlocks = ADirt::StaticClass();
 	//EarthBlocks = AEarth::StaticClass();
@@ -155,7 +155,6 @@ AWorldCreater::AWorldCreater() {
 }
 
 void AWorldCreater::CreateHeight(FVector position, int height) {
-
 	//GetWorld()->SpawnActor<AEarth>(EarthBlocks,
 	//	position + FVector(0.f, 0.f, 100.f * (height - 1)), FRotator::ZeroRotator);
 
@@ -167,7 +166,6 @@ void AWorldCreater::CreateHeight(FVector position, int height) {
 
 	UClass* BP_Dirt = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_DirtPath));
 	UClass* BP_Grass = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
-
 
 	GetWorld()->SpawnActor<ABasicBlock>(BP_Grass,
 		position + FVector(0.f, 0.f, 100.f * (height - 1)), FRotator::ZeroRotator);

@@ -4,7 +4,6 @@
 
 #include "Plat.h"
 #include "GameFramework/PlayerController.h"
-#include "item/Interactable.h"
 #include "item/Equipment.h"
 #include "system/SandBoxState.h"
 #include "avatar/Avatar.h"
@@ -31,14 +30,10 @@ public:
 
 	void CreateInventory();
 
-	
-
 protected:
 	virtual void BeginPlay() override;
 
 	virtual void SetupInputComponent() override;
-
-	void Interact();
 
 private:
 	void SwitchIventory();
@@ -57,14 +52,5 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 		UPlayerInventory* PlayerInventoryWidget;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-		class AInteractable* CurrentInteractable;
-
 	bool IsInventoryOpen = false;
-
-private:
-	AEquipment* WeaponTable;
-
-
-	
 };

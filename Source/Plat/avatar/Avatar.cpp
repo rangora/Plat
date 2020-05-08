@@ -4,16 +4,13 @@
 #include "item/CEquipmentData.h"
 #include "DrawDebugHelpers.h"
 
-
 AAvatar::AAvatar() {
 	PrimaryActorTick.bCanEverTick = true;
 	isAttacking = false;
 	AttackRange = 200.;
-	interactRange = 600.;
 	AttackRadius = 50.;
 	attackPower = 10.;
 	healthValue = 1.0;
-	//ThisType = ActorType::CHARACTER;
 
 	// Create SpringArmComponent
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
@@ -23,6 +20,14 @@ AAvatar::AAvatar() {
 	// Create CameraComponents
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("ThirdPersonCamera"));
 	CameraComponent->SetupAttachment(SpringArm);
+
+	// Common view setting.
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationRoll = false;
+	CameraComponent->bUsePawnControlRotation = false;	// 카메라 회전 시, 캐릭터 회전 여부.
+	SpringArm->bUsePawnControlRotation = true;			// 가능한 회전 제어를 사용하는지 여부.
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f);
 
 	// Create Actor Character
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Avatar(
@@ -43,15 +48,15 @@ AAvatar::AAvatar() {
 	// Collision
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Avatar"));
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AAvatar::PickupItem);
-	
+
 	// create the collection sphere for auto pick up system
 	CollectionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CollectionSphere"));
 	CollectionSphere->SetupAttachment(RootComponent);
 	CollectionSphere->SetSphereRadius(350.f);
 
 	// jump
-	GetCharacterMovement()->JumpZVelocity = 600.0f;	
-	
+	GetCharacterMovement()->JumpZVelocity = 600.0f;
+
 	// Weapon
 	Weapon = nullptr;
 
@@ -62,8 +67,7 @@ AAvatar::AAvatar() {
 
 void AAvatar::UpDown(float newAxisValue) {
 	const FRotator Rotation = Controller->GetControlRotation();
-	const FRotator YawRotation(0, Rotation.Yaw, 0);
-
+	const FRotator YawRotation = FRotator(0, Rotation.Yaw, 0);
 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
 
 	AddMovementInput(Direction, newAxisValue);
@@ -72,7 +76,6 @@ void AAvatar::UpDown(float newAxisValue) {
 void AAvatar::LeftRight(float newAxisValue) {
 	const FRotator Rotation = Controller->GetControlRotation();
 	const FRotator YawRotation(0, Rotation.Yaw, 0);
-
 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
 	AddMovementInput(Direction, newAxisValue);
@@ -101,7 +104,6 @@ void AAvatar::AttackTarget() {
 		FCollisionShape::MakeSphere(AttackRadius),
 		Params);
 
-
 	if (bResult) {
 		auto HitActor = HitResult.GetActor();
 
@@ -111,10 +113,10 @@ void AAvatar::AttackTarget() {
 
 		// If target is block.
 		TargetBlock = Cast<ABasicBlock>(HitActor);
-		if (IsValid(TargetBlock)) {
+		if (IsValid(TargetBlock) && !TargetBlock->IsPendingKill()) {
 			FDamageEvent DamageEvent;
 			float amountDamage = BASEATTACKPOWER;
-			
+
 			if (Weapon != nullptr) {
 				amountDamage = Weapon->damage;
 
@@ -124,10 +126,9 @@ void AAvatar::AttackTarget() {
 			}
 			HitActor->TakeDamage(amountDamage, DamageEvent, GetController(), this);
 		}
-
 	}
 	else {
-		if (IsValid(TargetBlock)) {
+		if (IsValid(TargetBlock) && !TargetBlock->IsPendingKill()) {
 			TargetBlock->Restore();
 			TargetBlock = nullptr;
 		}
@@ -137,8 +138,8 @@ void AAvatar::AttackTarget() {
 void AAvatar::OnHit() {
 	AttackAnim();
 	AttackTarget();
-	
-	if (TargetBlock) {
+
+	if (IsValid(TargetBlock) && !TargetBlock->IsPendingKill()) {
 		bIsAtackking = true;
 		GetWorldTimerManager().SetTimer(AttackAnimTimer, this, &AAvatar::AttackAnim, 0.4f, true);
 		GetWorldTimerManager().SetTimer(BreakBlockTimer, this, &AAvatar::AttackTarget, 0.3f, true);
@@ -159,21 +160,12 @@ void AAvatar::AttackAnim() {
 	ABAnim->PlayAttackMontage();
 }
 
-void AAvatar::Attack() {
-	if (isAttacking) return;
-
-	ABAnim->PlayAttackMontage();
-	isAttacking = true;
-}
-
 void AAvatar::UseItem() {
 	auto IController = Cast<AAvatarController>(GetController());
 	int index = IController->ScreenUIWidget->GetUsingIndex();
-	
+
 	// Check quick slot valiable.
 	if (index < 0) {
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
-			FString::Printf(TEXT("No Index")));
 		return;
 	}
 	IController->ScreenUIWidget->QuickSlots[index]->UseItem();
@@ -198,39 +190,6 @@ void AAvatar::CollectAutoPickups() {
 
 void AAvatar::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted) {
 	isAttacking = false;
-}
-
-void AAvatar::CheckForInteractables() {
-	// Create a LineTrace to check for a hit
-	FHitResult HitResult;
-
-	int32 Range = 1000;
-
-	FVector StartTrace;
-	FVector EndTrace;
-
-	StartTrace = CameraComponent->GetComponentLocation();
-	EndTrace = (CameraComponent->GetForwardVector() * Range) + StartTrace;
-
-
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(this);
-
-	AAvatarController* IController = Cast<AAvatarController>(GetController());
-
-	if (IController) {
-		// Check if something is hit
-		if (GetWorld()->LineTraceSingleByChannel(HitResult, StartTrace, EndTrace, ECC_Visibility, QueryParams)) {
-			// Cast the actor to AInteractable
-			AInteractable* Interactable = Cast<AInteractable>(HitResult.GetActor());
-			// If the cast is successful
-			if (Interactable) {
-				IController->CurrentInteractable = Interactable;
-				return;
-			}
-		}
-		IController->CurrentInteractable = nullptr;
-	}
 }
 
 float AAvatar::GetHealthValue() {
@@ -258,7 +217,7 @@ void AAvatar::SetWeapon(AEquipment* NewWeapon, FName ID) {
 }
 
 void AAvatar::DisarmWeapon() {
-	if(Weapon)
+	if (Weapon)
 		Weapon->Destroy();
 	Weapon = nullptr;
 	attackPower = BASEATTACKPOWER;
@@ -270,39 +229,42 @@ void AAvatar::BeginPlay() {
 
 void AAvatar::ViewChange() {
 	switch (CurrentView) {
-		// FirstView -> ThirdView
+		// FirstView -> ThirdView(Start view)
 	case ViewState::FIRSTPERSON: {
-			SpringArm->TargetArmLength = 400.0f;
-			SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
-			SpringArm->bUsePawnControlRotation = true; 
-			AttackRange += SpringArm->TargetArmLength;
+		SpringArm->TargetArmLength = 400.0f;
+		SpringArm->SetRelativeLocation(FVector::ZeroVector);	
+		AttackRange += SpringArm->TargetArmLength;
 
-			bUseControllerRotationYaw = false;
-			bUseControllerRotationPitch = false;
-			bUseControllerRotationRoll = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
 
-			GetMesh()->bOwnerNoSee = false;
-			GetMesh()->MarkRenderStateDirty();
-
-			GetCharacterMovement()->bOrientRotationToMovement = true; 
-			GetCharacterMovement()->bUseControllerDesiredRotation = false;
-			GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
-
-			CurrentView = ViewState::THIRDPERSON;
-			break;
-		}
-		// ThriedView -> FirstView
+		// Shadow on.
+		GetMesh()->bCastDynamicShadow = true;
+		GetMesh()->CastShadow = true;
+		
+		CurrentView = ViewState::THIRDPERSON;
+		break;
+	}
+	// ThriedView -> FirstView
 	case ViewState::THIRDPERSON: {	
-			AttackRange -= SpringArm->TargetArmLength;
-			SpringArm->SetRelativeLocation(FVector(23.f, 0.f, 67.f));
-			SpringArm->TargetArmLength = 0.f;
-			bUseControllerRotationYaw = true;
-			GetMesh()->bOwnerNoSee = true;
-			GetMesh()->MarkRenderStateDirty();
+		SpringArm->TargetArmLength = 0.f;
+		SpringArm->SetRelativeLocation(FVector(15.f, 0.f, 72.f));
+		AttackRange -= SpringArm->TargetArmLength;	
 
-			CurrentView = ViewState::FIRSTPERSON;
-			break;
-		}
+		GetCharacterMovement()->bOrientRotationToMovement = false;		// 방향키 방향으로 캐릭터가 회전함.
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;	// 마우스 방향으로 캐릭터도 회전함.
+		
+
+		// Shadow off.
+		GetMesh()->bCastDynamicShadow = false;
+		GetMesh()->CastShadow = false;
+
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+			FString::Printf(TEXT("First : %s"), *(SpringArm->GetRelativeLocation().ToString())));
+
+		CurrentView = ViewState::FIRSTPERSON;
+		break;
+	}
 	}
 }
 
@@ -320,7 +282,6 @@ void AAvatar::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
 	CollectAutoPickups();
-	CheckForInteractables();
 }
 
 void AAvatar::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {

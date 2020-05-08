@@ -7,12 +7,11 @@
 #include "BaseUI.generated.h"
 
 /**
- * 
+ *
  */
 
 class AAvatarController;
 class AAvatar;
-
 
 UCLASS()
 class PLAT_API UBaseUI : public UUserWidget {

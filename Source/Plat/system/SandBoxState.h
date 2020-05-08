@@ -9,16 +9,16 @@
 #include "SandBoxState.generated.h"
 
 /**
- * 
+ *
  */
 
 UCLASS()
 class PLAT_API ASandBoxState : public AGameStateBase {
 	GENERATED_BODY()
-	
+
 public:
 	ASandBoxState();
-	
+
 	UDataTable* GetBaseDB() const;
 	UDataTable* GetBlockDB() const;
 	UDataTable* GetEquipmentDB() const;

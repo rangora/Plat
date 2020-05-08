@@ -6,34 +6,32 @@
 #include "Components/ActorComponent.h"
 #include "BasicBlockComponent.generated.h"
 
-
 class AManPickup;
 
 DECLARE_MULTICAST_DELEGATE(FOnHPIsZeroDelegate);
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class PLAT_API UBasicBlockComponent : public UActorComponent {
 	GENERATED_BODY()
 
-public:	
+public:
 	UBasicBlockComponent();
-	
+
 	void SetDamage(float NewDamage);
 	void Restore();
 
 protected:
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	FOnHPIsZeroDelegate OnHPIsZero;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 		AActor* DropItem;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly)
 		float maxHP;
 
-	UPROPERTY(Transient, VisibleInstanceOnly, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere)
 		float currentHP;
-		
 };

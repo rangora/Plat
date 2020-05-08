@@ -13,8 +13,6 @@ UPlayerInventory::UPlayerInventory(const FObjectInitializer& ObjectInitializer)
 
 	if (UI_SLOT_C.Succeeded())
 		SlotClass = UI_SLOT_C.Class;
-
-	
 }
 
 void UPlayerInventory::NativeConstruct() {
@@ -42,16 +40,14 @@ FReply UPlayerInventory::NativeOnKeyDown(const FGeometry& MyGeometry, const FKey
 
 		//FInputModeGameOnly Mode;
 		//IController->SetInputMode(Mode);
-
-		
 	}
-	
+
 	return reply.NativeReply;
 }
 
 int UPlayerInventory::FindItemInSlots(FName ItemID) {
 	for (int i = 0; i < Slots.Num(); i++) {
-		if(Slots[i]->ItemID == ItemID)
+		if (Slots[i]->ItemID == ItemID)
 			return i;
 	}
 
@@ -61,28 +57,28 @@ int UPlayerInventory::FindItemInSlots(FName ItemID) {
 bool UPlayerInventory::SwapSlot(int leftIndex, int rightIndex) {
 	if (!IsValid(Slots[leftIndex]) || !IsValid(Slots[rightIndex]))
 		return false;
-	
-	FName TempID			= Slots[leftIndex]->ItemID;
-	EItemType TempType	    = Slots[leftIndex]->ItemType;
-	FString TempName		= Slots[leftIndex]->ItemName;
-	int TempCount		    = Slots[leftIndex]->Count;
-	bool TempAllocatable    = Slots[leftIndex]->Allocatable;
+
+	FName TempID = Slots[leftIndex]->ItemID;
+	EItemType TempType = Slots[leftIndex]->ItemType;
+	FString TempName = Slots[leftIndex]->ItemName;
+	int TempCount = Slots[leftIndex]->Count;
+	bool TempAllocatable = Slots[leftIndex]->Allocatable;
 	UTexture2D* TempTexture = Slots[leftIndex]->CurrentTexture;
-	
-	Slots[leftIndex]->ItemID		 = Slots[rightIndex]->ItemID;
-	Slots[leftIndex]->ItemType		 = Slots[rightIndex]->ItemType;
-	Slots[leftIndex]->ItemName		 = Slots[rightIndex]->ItemName;
-	Slots[leftIndex]->Count			 = Slots[rightIndex]->Count;
-	Slots[leftIndex]->Allocatable	 = Slots[rightIndex]->Allocatable;
+
+	Slots[leftIndex]->ItemID = Slots[rightIndex]->ItemID;
+	Slots[leftIndex]->ItemType = Slots[rightIndex]->ItemType;
+	Slots[leftIndex]->ItemName = Slots[rightIndex]->ItemName;
+	Slots[leftIndex]->Count = Slots[rightIndex]->Count;
+	Slots[leftIndex]->Allocatable = Slots[rightIndex]->Allocatable;
 	Slots[leftIndex]->CurrentTexture = Slots[rightIndex]->CurrentTexture;
 
-	Slots[rightIndex]->ItemID			 = TempID;
-	Slots[rightIndex]->ItemType			 = TempType;
-	Slots[rightIndex]->ItemName			 = TempName;
-	Slots[rightIndex]->Count			 = TempCount;
-	Slots[rightIndex]->Allocatable		 = TempAllocatable;
-	Slots[rightIndex]->CurrentTexture	 = TempTexture;
-	
+	Slots[rightIndex]->ItemID = TempID;
+	Slots[rightIndex]->ItemType = TempType;
+	Slots[rightIndex]->ItemName = TempName;
+	Slots[rightIndex]->Count = TempCount;
+	Slots[rightIndex]->Allocatable = TempAllocatable;
+	Slots[rightIndex]->CurrentTexture = TempTexture;
+
 	Slots[leftIndex]->Refresh();
 	Slots[rightIndex]->Refresh();
 
@@ -103,7 +99,7 @@ int UPlayerInventory::FindEmptySlot() {
 bool UPlayerInventory::RefreshQuickSlots() {
 	int slotSize = IController->ScreenUIWidget->QuickSlots.Num();
 	if (slotSize) {
-		for(int i = 0; i < slotSize; i++)
+		for (int i = 0; i < slotSize; i++)
 			IController->ScreenUIWidget->QuickSlots[i]->Refresh();
 		return true;
 	}

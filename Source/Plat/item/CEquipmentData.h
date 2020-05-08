@@ -7,14 +7,12 @@
 #include "item/CBlockData.h"
 #include "CEquipmentData.generated.h"
 
-
 UENUM(BlueprintType)
 enum class EEQuipmentDetail : uint8 {
 	NONE		UMETA(DisplayName = "None"),
 	WEAPON		UMETA(DisplayName = "Weapon"),
 	UTILITY		UMETA(DisplayName = "Utility")
 };
-
 
 USTRUCT(BlueprintType)
 struct FEquipmentData : public FTableRowBase {
@@ -35,5 +33,4 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float Damage;
-
 };

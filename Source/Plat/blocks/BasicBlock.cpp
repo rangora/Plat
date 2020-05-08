@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "BasicBlock.h"
 #include "avatar/Avatar.h"
 #include "system/AvatarController.h"
@@ -13,7 +12,7 @@ ABasicBlock::ABasicBlock() {
 	BlockStat = CreateDefaultSubobject<UBasicBlockComponent>(TEXT("BlockStat"));
 	RootComponent = Cast<USceneComponent>(BlockMesh);
 
-	BlockMesh->SetCollisionProfileName(TEXT("Block"));	
+	BlockMesh->SetCollisionProfileName(TEXT("Block"));
 
 	ItemID = FName("NO_ID");
 	Match = EMatch::NONE;
@@ -68,18 +67,17 @@ float ABasicBlock::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 		Instances[i]->SetScalarParameterValue(FName("CrackingValue"), CrackingValue);
 	}
 
-
 	BlockStat->SetDamage(finalDamage);
 	return finalDamage;
 }
 
 bool ABasicBlock::UseItem(ACharacter* Player, APlayerController* Contrller, UWorld* World, FString BlockName) {
-	FString BP_GrassPath = "/Game/Blueprints/BP_" + BlockName + "." + "BP_" + BlockName + "_C"; 
+	FString BP_GrassPath = "/Game/Blueprints/BP_" + BlockName + "." + "BP_" + BlockName + "_C";
 	UClass* BP_Block = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
-	
+
 	if (!IsValid(BP_Block))
 		return false;
-	
+
 	auto IPlayer = Cast<AAvatar>(Player);
 	auto IController = Cast<AAvatarController>(Contrller);
 	auto CameraComponent = IPlayer->GetCameraComponent();
@@ -101,7 +99,7 @@ bool ABasicBlock::UseItem(ACharacter* Player, APlayerController* Contrller, UWor
 	if (bResult) {
 		auto _hitLocation = CollisionResult.Location;
 		auto _blockActor = CollisionResult.GetActor();
-		//FVector CharaLocation = CameraComponent->GetComponentLocation();
+
 		FVector _targetLocation = _blockActor->GetActorLocation();
 		FVector _deployLocation = _targetLocation;
 		FVector _diff = _targetLocation - _hitLocation;
@@ -128,14 +126,14 @@ bool ABasicBlock::UseItem(ACharacter* Player, APlayerController* Contrller, UWor
 		FVector TopLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 200.f);
 
 		// Check collision between player and block will be deployed.
-		if (CharaLocation.Equals(_deployLocation) ||  
+		if (CharaLocation.Equals(_deployLocation) ||
 			MiddleLocation.Equals(_deployLocation) ||
-				TopLocation.Equals(_deployLocation)) {
+			TopLocation.Equals(_deployLocation)) {
 			return false;
 		}
 
 		// Build the block.
-		else {		
+		else {
 			World->SpawnActor<ABasicBlock>(BP_Block, _deployLocation, FRotator::ZeroRotator);
 			return true;
 		}

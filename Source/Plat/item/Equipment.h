@@ -9,8 +9,8 @@
 UCLASS()
 class PLAT_API AEquipment : public AActor {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	AEquipment();
 
 	virtual void PostInitializeComponents() override;
@@ -20,14 +20,12 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-
 private:
 	UPROPERTY(VisibleAnywhere)
 		FString Name;
 
 public:
 	float damage;
-
 	float adDamage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

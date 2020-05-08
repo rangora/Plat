@@ -8,7 +8,6 @@
 #include "Components/WidgetComponent.h"
 #include "Components/TimelineComponent.h"
 #include "Components/BoxComponent.h"
-#include "item/Interactable.h"
 #include "item/AutoPickup.h"
 #include "item/Equipment.h"
 #include "system/AvatarController.h"
@@ -16,7 +15,6 @@
 #include "TimerManager.h"
 #include "UI/ScreenUI.h"
 #include "Avatar.generated.h"
-
 
 UCLASS()
 class PLAT_API AAvatar : public ACharacter {
@@ -29,73 +27,74 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void PostInitializeComponents() override;
 
-	void Attack();
+	/* Use the Quickslot item. */
 	void UseItem();
+
+	/* Push 'tab' to change view type, first person or thrid person. */
 	void ViewChange();
 
-	// 범위 내 대해서 AutoPuckup함수 발동. 
-	void CollectAutoPickups();
-
-	// 범위 내 가장 가까운 상호작용 대상을 체크 한다. 
-	void CheckForInteractables();
-
 	float GetHealthValue();
-	AEquipment* GetWeapon();
-	
 	UCameraComponent* GetCameraComponent();
+
+	/* Functions for player equipment. */
+	AEquipment* GetWeapon();
 	void SetWeapon(AEquipment* NewWeapon, FName ID);
 	void DisarmWeapon();
 
+	/* Functions for itme collecting. */
 	UFUNCTION()
 		void PickupItem(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	/* 범위 내 대해서 AutoPuckup함수 발동. */
+	void CollectAutoPickups();
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	/* Constant for only used in avatar class. */
 	const float BASEATTACKPOWER = 10.f;
 	enum class ViewState { FIRSTPERSON, THIRDPERSON };
 
+	/* Movement functions. */
 	void UpDown(float newAxisValue);
 	void LeftRight(float newAxisValue);
 	void LookUp(float newAxisValue);
 	void Turn(float newAxisValue);
 
-	void AttackTarget();
+	/* Attack : Check the validation of target and give damage. */
 	void OnHit();
+	void AttackTarget();
 	void EndHit();
 
+	/* Attack animation. not interaction. */
 	void AttackAnim();
 
 	UFUNCTION()
 		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
-
 public:
-	float interactRange;
+	/* Maximum build range for blocks. */
+	const float interactRange = 600.f;
 
 private:
 	bool bIsAtackking;
 
+	/* Using in  OnHit() function for continous mouse left button down event. */
 	FTimerHandle BreakBlockTimer;
 	FTimerHandle AttackAnimTimer;
 
+	/* It point block if hit the block on OnHit() function. */
 	ABasicBlock* TargetBlock;
 
-	// for UI..
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health", Meta = (AllowPrivateAccess = true))
-		float healthValue;
+	ViewState CurrentView;
 
-	// for attack function..
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
-		float AttackRange;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
-		float AttackRadius;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
-		bool isAttacking;
+	/* PlayerCharacter parameters. */
+	float healthValue;
+	float AttackRange;
+	float AttackRadius;
+	float attackPower;
+	bool isAttacking;
 
 	UPROPERTY()
 		class UAvatarAnimInstance* ABAnim;
@@ -103,20 +102,13 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		USpringArmComponent* SpringArm;
 
-	UPROPERTY(VisibleDefaultsOnly)
-		USkeletalMeshComponent* FirstPersonMesh;
-
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 		UCameraComponent* CameraComponent;
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 		AEquipment* Weapon;
 
-	// Collection sphere 
+	/* Collection sphere for auto puckup. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USphereComponent* CollectionSphere;
-
-	float attackPower;
-
-	ViewState CurrentView;
 };

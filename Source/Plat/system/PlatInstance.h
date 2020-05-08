@@ -7,10 +7,9 @@
 #include "PlatInstance.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class PLAT_API UPlatInstance : public UGameInstance {
 	GENERATED_BODY()
-	
 };

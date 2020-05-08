@@ -6,10 +6,6 @@
 #include "Engine/DataTable.h"
 #include "CBlockData.generated.h"
 
-
-
-
-
 UENUM(BlueprintType)
 enum class EMatch : uint8 {
 	NONE,
@@ -18,7 +14,7 @@ enum class EMatch : uint8 {
 	PICKAXE
 };
 
-USTRUCT(BlueprintType) 
+USTRUCT(BlueprintType)
 struct FBlockData : public FTableRowBase {
 	GENERATED_BODY()
 
@@ -26,6 +22,9 @@ public:
 	FBlockData();
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FName ItemID;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		EMatch Match;
 };

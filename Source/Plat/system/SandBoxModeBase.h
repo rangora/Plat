@@ -10,12 +10,12 @@
 #include "SandBoxModeBase.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class PLAT_API ASandBoxModeBase : public AGameModeBase {
 	GENERATED_BODY()
-	
+
 public:
 	ASandBoxModeBase();
 	virtual void PostLogin(APlayerController* newPlayer) override;

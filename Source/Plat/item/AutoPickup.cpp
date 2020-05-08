@@ -24,10 +24,12 @@ void AAutoPickup::Tick(float DeltaTime) {
 	AddActorLocalRotation(FRotator(0.f, rotateSpeed * DeltaTime, 0.f));
 }
 
+
+
 void AAutoPickup::Collect_Implementation(APlayerController* Controller) {
 	AAvatarController* IController = Cast<AAvatarController>(Controller);
 	AAvatar* IPlayer = Cast<AAvatar>(IController->GetCharacter());
-	
+
 	float speed = 0.03;
 	FVector PlayerLocation = IPlayer->GetActorLocation();
 	PlayerLocation.Z += 55.f;

@@ -8,7 +8,6 @@
 #include "Item/CBlockData.h"
 #include "item/CEquipmentData.h"
 
-
 UInventorySlot::UInventorySlot(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer) {
 	Allocatable = true;
@@ -27,7 +26,7 @@ void UInventorySlot::AddItemCount(int num) {
 }
 
 bool UInventorySlot::RefreshQuickSlot() {
-	// Check whether this slot is bind with quick slot or not, 
+	// Check whether this slot is bind with quick slot or not,
 	// if bind, refresh it.
 	if (QuickStart <= Index && Index <= QuickEnd) {
 		int qIndex = Index - QuickStart;
@@ -61,14 +60,14 @@ bool UInventorySlot::UseItem() {
 		break;
 
 	case EItemType::EQUIPMENT:
-	
-	default: 
+
+	default:
 		return false;
 	}
 
 	Count--;
 	Refresh();
-	
+
 	if (Count == 0) {
 		if (IPlayer->GetWeapon())
 			IPlayer->GetWeapon()->Destroy();
@@ -82,17 +81,17 @@ bool UInventorySlot::UseItem() {
 void UInventorySlot::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 
-	if (OutOperation == nullptr) {	
+	if (OutOperation == nullptr) {
 		UDragDropSlot* oper = NewObject<UDragDropSlot>();
 		oper->From = this;
 		OutOperation = oper;
-	
+
 		if (DragImageWidget) {
 			//DragImageWidget->ItemData.Thumbnail = this->ItemData.Thumbnail;
 			DragImageWidget->CurrentTexture = this->CurrentTexture;
 			DragImageWidget->Allocatable = false;
 			oper->DefaultDragVisual = DragImageWidget;
-		}	
+		}
 	}
 }
 
@@ -135,11 +134,10 @@ bool UInventorySlot::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 FReply UInventorySlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) {
 	FEventReply reply;
 	reply.NativeReply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
-	
+
 	// Right mouse button was clicked
 	if (InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton) == true) {
 		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Drag : Right button was clicked"));
-
 	}
 	// Left mouse button was clicked
 	else if (InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton) == true) {
@@ -149,7 +147,7 @@ FReply UInventorySlot::NativeOnMouseButtonDown(const FGeometry& InGeometry, cons
 			// Move to 'NativeOnDragDetected' function through DetectDragIfPressed function.
 			reply = UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton);
 		}
-	}	
+	}
 	return reply.NativeReply;
 }
 
@@ -162,6 +160,12 @@ FReply UInventorySlot::NativeOnMouseButtonUp(const FGeometry& InGeometry, const 
 bool UInventorySlot::SetNewItem(FName ID) {
 	auto IState = Cast<ASandBoxState>(GetWorld()->GetGameState());
 	FBaseItemData* BaseData = IState->BaseDB->FindRow<FBaseItemData>(ID, "");
+
+	if (BaseData == nullptr) {
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+			FString::Printf(TEXT("InValid ID..")));
+		return false;
+	}
 
 	switch (BaseData->ItemType) {
 	case EItemType::EQUIPMENT:
@@ -187,4 +191,3 @@ bool UInventorySlot::SetNewItem(FName ID) {
 
 	return true;
 }
-

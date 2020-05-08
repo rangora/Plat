@@ -16,5 +16,4 @@ public:
 public:
 	UPROPERTY(EditDefaultsOnly)
 		FString Name;
-
 };

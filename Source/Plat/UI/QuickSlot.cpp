@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "QuickSlot.h"
 
 UQuickSlot::UQuickSlot(const FObjectInitializer& ObjectInitializer)
@@ -33,7 +32,6 @@ void UQuickSlot::Refresh() {
 		}
 		ThumbnailImage->SetBrushFromTexture(LinkedSlot->CurrentTexture);
 	}
-
 }
 
 bool UQuickSlot::UseItem() {
@@ -45,9 +43,8 @@ bool UQuickSlot::UseItem() {
 }
 
 void UQuickSlot::ShowBorder(bool isInUsed) {
-	if(isInUsed)
+	if (isInUsed)
 		Border->SetVisibility(ESlateVisibility::Visible);
-	else 
+	else
 		Border->SetVisibility(ESlateVisibility::Hidden);
 }
-

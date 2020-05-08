@@ -26,9 +26,9 @@ public:
 	virtual void NativeConstruct() override;
 	virtual bool UseItem() override;
 	virtual void Refresh() override;
-	
+
 	void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
-	
+
 	/* Call when you deteched the button and Outoperation should be not nullptr. */
 	bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
@@ -36,7 +36,7 @@ public:
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int Index; 
+		int Index;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UInventorySlot* DragImageWidget;

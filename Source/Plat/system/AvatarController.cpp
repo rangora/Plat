@@ -2,7 +2,6 @@
 
 #include "AvatarController.h"
 
-
 AAvatarController::AAvatarController() {
 	static ConstructorHelpers::FClassFinder<UPlayerInventory> UI_INVENTORY_C(
 		TEXT("/Game/UMG/BP_Inventory.BP_Inventory_C"));
@@ -21,14 +20,14 @@ void AAvatarController::PostInitializeComponents() {
 	Super::PostInitializeComponents();
 }
 
-bool AAvatarController::AddItemToInventory(FName ID) {	
+bool AAvatarController::AddItemToInventory(FName ID) {
 	int EmptyIndex = PlayerInventoryWidget->FindEmptySlot();
 
 	// Check for empty slot and validation.
 	if (EmptyIndex >= 0) {
 		// Find slot if it is a item that already exists.
 		int ExistItemIndex = PlayerInventoryWidget->FindItemInSlots(ID);
-		
+
 		// Exist..
 		if (ExistItemIndex >= 0) {
 			PlayerInventoryWidget->Slots[ExistItemIndex]->AddItemCount(1);
@@ -51,7 +50,6 @@ void AAvatarController::BeginPlay() {
 		PlayerInventoryWidget = CreateWidget<UPlayerInventory>(this, PlayerInventoryClass);
 	}
 
-
 	if (!IsValid(ScreenUIWidget)) {
 		ScreenUIWidget = CreateWidget<UScreenUI>(this, ScreenUIClass);
 		ScreenUIWidget->AddToViewport();
@@ -62,18 +60,11 @@ void AAvatarController::BeginPlay() {
 
 void AAvatarController::SetupInputComponent() {
 	Super::SetupInputComponent();
-	InputComponent->BindAction(TEXT("Interact"), EInputEvent::IE_Pressed, this, &AAvatarController::Interact);
 	InputComponent->BindAction(TEXT("OpenInventory"), EInputEvent::IE_Pressed, this, &AAvatarController::SwitchIventory);
 	InputComponent->BindAction(TEXT("Quick1"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
 	InputComponent->BindAction(TEXT("Quick2"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
 	InputComponent->BindAction(TEXT("Quick3"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
 	InputComponent->BindAction(TEXT("Quick4"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
-}
-
-void AAvatarController::Interact() {
-	if (CurrentInteractable) {
-		CurrentInteractable->Interact(this);
-	}
 }
 
 void AAvatarController::SwitchIventory() {
@@ -85,7 +76,7 @@ void AAvatarController::SwitchIventory() {
 
 			FInputModeGameAndUI Mode;
 			Mode.SetWidgetToFocus(PlayerInventoryWidget->GetCachedWidget());
-			
+
 			SetInputMode(Mode);
 		}
 		else {
@@ -93,8 +84,8 @@ void AAvatarController::SwitchIventory() {
 			IsInventoryOpen = false;
 			bShowMouseCursor = false;
 
-			FInputModeGameOnly Mode;		
-			
+			FInputModeGameOnly Mode;
+
 			SetInputMode(Mode);
 		}
 	}
@@ -123,7 +114,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 		inputIndex = 3;
 	}
 
-	// If quickSlot of input index is empty. 
+	// If quickSlot of input index is empty.
 	if (ItemName.Equals("None")) {
 		if (ScreenUIWidget->GetUsingIndex() != -1) {
 			ScreenUIWidget->QuickSlots[ScreenUIWidget->GetUsingIndex()]->ShowBorder(false);
@@ -165,7 +156,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 				FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponSocket);
 
 			FName ItemID = ScreenUIWidget->QuickSlots[ScreenUIWidget->GetUsingIndex()]->LinkedSlot->ItemID;
-		
+
 			// Give atrributes to player in accordance with equipment.
 			IPlayer->SetWeapon(WeaponActor, ItemID);
 		}

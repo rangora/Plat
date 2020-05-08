@@ -8,7 +8,7 @@
 #include "DragDropSlot.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class PLAT_API UDragDropSlot : public UDragDropOperation {
