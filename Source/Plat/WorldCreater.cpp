@@ -71,7 +71,7 @@ int AWorldCreater::octave(int x, int y) {
 void AWorldCreater::similar_k_means() {
 	int index{};
 	int adjacent[8];
-	int threshold = 4;
+	int threshold = 6;
 
 	for (int i = 0; i < MAPWIDTH; i++) {
 		for (int j = 0; j < MAPHEIGHT; j++) {
@@ -134,12 +134,8 @@ AWorldCreater::AWorldCreater() {
 	float y{};
 
 	_Position = FVector::ZeroVector;
-	//DirtBlocks = ADirt::StaticClass();
-	//EarthBlocks = AEarth::StaticClass();
-	//Blocks = ABlock::StaticClass();
 
 	_y = new int[MAPWIDTH * MAPHEIGHT];
-	//std::fill_n(_y, MAPWIDTH * MAPHEIGHT, 1);
 
 	for (int i = 0; i < 512; i++)
 		_s[i] = FMath::RandRange(0, 255);
@@ -155,17 +151,13 @@ AWorldCreater::AWorldCreater() {
 }
 
 void AWorldCreater::CreateHeight(FVector position, int height) {
-	//GetWorld()->SpawnActor<AEarth>(EarthBlocks,
-	//	position + FVector(0.f, 0.f, 100.f * (height - 1)), FRotator::ZeroRotator);
-
-	//GetWorld()->SpawnActor<ADirt>(DirtBlocks,
-	//	position + FVector(0.f, 0.f, 100.f * (height - 2)), FRotator::ZeroRotator);
-
-	FString BP_DirtPath = "Game/Blueprints/BP_Dirt.BP_Dirt_C";
+	height /= 2.f;
+	FString BP_DirtPath = "/Game/Blueprints/BP_Dirt.BP_Dirt_C";
 	FString BP_GrassPath = "/Game/Blueprints/BP_Grass.BP_Grass_C";
 
 	UClass* BP_Dirt = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_DirtPath));
 	UClass* BP_Grass = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
+
 
 	GetWorld()->SpawnActor<ABasicBlock>(BP_Grass,
 		position + FVector(0.f, 0.f, 100.f * (height - 1)), FRotator::ZeroRotator);

@@ -37,11 +37,4 @@ private:
 	int _octaves = 8;
 	int* _y = nullptr;
 	int _s[512];
-
-	//UPROPERTY(EditInstanceOnly)
-	//	TSubclassOf<class ABlock> Blocks;
-	//UPROPERTY(EditInstanceOnly)
-	//	TSubclassOf<class ADirt> DirtBlocks;
-	//UPROPERTY(EditInstanceOnly)
-	//	TSubclassOf<class AEarth> EarthBlocks;
 };

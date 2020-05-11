@@ -141,7 +141,7 @@ void AAvatar::OnHit() {
 
 	if (IsValid(TargetBlock) && !TargetBlock->IsPendingKill()) {
 		bIsAtackking = true;
-		GetWorldTimerManager().SetTimer(AttackAnimTimer, this, &AAvatar::AttackAnim, 0.4f, true);
+		GetWorldTimerManager().SetTimer(AttackAnimTimer, this, &AAvatar::AttackAnim, 0.3f, true);
 		GetWorldTimerManager().SetTimer(BreakBlockTimer, this, &AAvatar::AttackTarget, 0.3f, true);
 	}
 }
