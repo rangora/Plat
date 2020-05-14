@@ -112,9 +112,9 @@ bool ABasicBlock::UseItem(ACharacter* Player, APlayerController* Contrller, UWor
 			_deployLocation.Y += 100;
 		else if (_diff.Y > 50.f)
 			_deployLocation.Y -= 100;
-		else if (_diff.Z < -100.f)
+		else if (_diff.Z < -50.f)
 			_deployLocation.Z += 100;
-		else if (_diff.Z > 1.f)
+		else if (_diff.Z > 50.f)
 			_deployLocation.Z -= 100;
 
 		FVector CharaLocation = IPlayer->GetCapsuleComponent()->GetComponentLocation();

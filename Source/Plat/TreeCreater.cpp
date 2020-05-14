@@ -7,17 +7,20 @@
 ATreeCreater::ATreeCreater() {
 	PrimaryActorTick.bCanEverTick = false;
 
-	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	RootComponent = Root;
+	BaseLog = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Root"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh>
+		TreeLog(TEXT("/Game/resources/blocks/Tree.Tree"));
 
-	PlantLocation = RootComponent->GetComponentLocation();
+	if (TreeLog.Succeeded())
+		BaseLog->SetStaticMesh(TreeLog.Object);
+
+	RootComponent = BaseLog;
 	BP_LogPath = "/Game/Blueprints/BP_Tree.BP_Tree_C";
 	BP_LeafPath = "/Game/Blueprints/BP_Leaf.BP_Leaf_C";
 }
 
 void ATreeCreater::BeginPlay() {
-	Super::BeginPlay();
-	
+	Super::BeginPlay();	
 	PlantTree();
 }
 
@@ -33,13 +36,13 @@ bool ATreeCreater::CheckSpace() {
 }
 
 void ATreeCreater::CreateLog() {
-	CurrentLocation = PlantLocation;
+	CurrentLocation = GetActorLocation();
 	UClass* BP_Log = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_LogPath));
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 3; i++) {
+		CurrentLocation.Z += 100.f;
 		GetWorld()->SpawnActor<ABasicBlock>(BP_Log,
 			CurrentLocation, FRotator::ZeroRotator);
-		CurrentLocation.Z += 100.f;
 	}
 }
 

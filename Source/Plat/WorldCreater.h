@@ -7,9 +7,6 @@
 #include "GameFramework/Actor.h"
 #include "WorldCreater.generated.h"
 
-#define MAPWIDTH  128
-#define MAPHEIGHT 128
-#define STEP 100
 
 UCLASS()
 class PLAT_API AWorldCreater : public AActor {
@@ -25,16 +22,28 @@ private:
 	float lerp(float t, float a, float b);
 	float grad(int hash, float x, float y, float z);
 	float noise(float x, float y);
-	int octave(int x, int y);
+	float octave(int x, int y);
 
-	void similar_k_means();
+
+	void CreateTerrain();
+	void CreateTreeMap();
+	void CreateTree(FVector position, int height);
 
 public:
+	enum {
+		X = 100,
+		Y = 100,
+		Z = 100,
+		BOUNDARY1 = 40,
+		BOUNDARY2 = 70,
+		BOUNDARY3 = 100
+	};
+
 	FVector _Position;
 
 private:
-	float _scalingBias = 1.8f;
+	float _scalingBias = 2.0f;
 	int _octaves = 8;
-	int* _y = nullptr;
-	int _s[512];
+	int* treeMap = nullptr;
+	int _param[512];
 };

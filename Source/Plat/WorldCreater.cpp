@@ -1,15 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "WorldCreater.h"
+#include "TreeCreater.h"
 #include <iostream>
 #include <algorithm>
+#include <random>
 
 float AWorldCreater::fade(float t) {
 	return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
 float AWorldCreater::lerp(float t, float a, float b) {
-	return a + t * (b - a);
+	return a + t * (b - a); // t = amount
 }
 
 float AWorldCreater::grad(int hash, float x, float y, float z) {
@@ -31,32 +33,33 @@ float AWorldCreater::noise(float x, float y) {
 	double u = fade(x);
 	double v = fade(y);
 
-	int A = _s[X] + Y;
-	int B = _s[X + 1] + Y;
+	int A = _param[X] + Y;
+	int B = _param[X + 1] + Y;
 
 #define xFlags 0x46552222
 #define yFlags 0x2222550A
 
-	hash = (_s[_s[A]] & 0xF) << 1;
+	hash = (_param[_param[A]] & 0xF) << 1;
 	// Grad(p[p[A]], x, y)
 	double g22 = (((xFlags >> hash) & 3) - 1) * x + (((yFlags >> hash) & 3) - 1) * y;
-	hash = (_s[_s[B]] & 0xF) << 1;
+	hash = (_param[_param[B]] & 0xF) << 1;
 	// Grad(p[p[A]], x - 1, y)
 	double g12 = (((xFlags >> hash) & 3) - 1) * (x - 1) + (((yFlags >> hash) & 3) - 1) * y;
-	double c1 = g22 + u * (g12 - g22);
+	double c1 = g22 + u * (g12 - g22); // Interpolation X.
 
-	hash = (_s[_s[A + 1]] & 0xF) << 1;
+	hash = (_param[_param[A + 1]] & 0xF) << 1;
 	// Grad(p[p[A + 1], x, y - 1)
 	double g21 = (((xFlags >> hash) & 3) - 1) * x + (((yFlags >> hash) & 3) - 1) * (y - 1);
-	hash = (_s[_s[B + 1]] & 0xF) << 1;
+	hash = (_param[_param[B + 1]] & 0xF) << 1;
 	// Grad(p[p[A + 1], x - 1, y - 1)
 	double g11 = (((xFlags >> hash) & 3) - 1) * (x - 1) + (((yFlags >> hash) & 3) - 1) * (y - 1);
-	double c2 = g21 + u * (g11 - g21);
+	double c2 = g21 + u * (g11 - g21); // Interpolation X.
 
+	// Return Y interpolation value.
 	return c1 + v * (c2 - c1);
 }
 
-int AWorldCreater::octave(int x, int y) {
+float AWorldCreater::octave(int x, int y) {
 	float amplitude = 1, freq = 1;
 	float sum{};
 
@@ -65,93 +68,125 @@ int AWorldCreater::octave(int x, int y) {
 		amplitude *= 2.0f;
 		freq *= 0.5f;
 	}
-	return floor(floor(sum) / 4) + 1;
+	return sum;
 }
 
-void AWorldCreater::similar_k_means() {
-	int index{};
-	int adjacent[8];
-	int threshold = 6;
+void AWorldCreater::CreateTerrain() {
+	FString BP_DirtPath = "/Game/Blueprints/BP_Dirt.BP_Dirt_C";
+	FString BP_GrassPath = "/Game/Blueprints/BP_Grass.BP_Grass_C";
+	FString BP_ProckPath = "/Game/Blueprints/BP_Rock.BP_Rock_C";
 
-	for (int i = 0; i < MAPWIDTH; i++) {
-		for (int j = 0; j < MAPHEIGHT; j++) {
-			int key[8]{};
-			int value[8]{};
-			int correct{};
-			int sum{};
+	UClass* BP_Dirt = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_DirtPath));
+	UClass* BP_Grass = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
+	UClass* BP_Rock = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_ProckPath));
+	UClass* DeployedBlock = nullptr;
 
-			index = i * MAPWIDTH + j;
+	float threshold = 20.0f;
+	float noiseScale = 20.f; // grid를 정의. 높을수록 단순해짐.
+	float amp = 16.f;
+	int preZ{};
+	int currentZ;
 
-			// boundary check..
-			if ((index - MAPWIDTH) < 0 ||
-				(index + MAPWIDTH) > MAPWIDTH * MAPHEIGHT ||
-				(index % MAPWIDTH) == 0 ||
-				(index % MAPWIDTH - 1) == 0) continue;
+	std::random_device seed;
+	std::default_random_engine eng(seed());
+	std::bernoulli_distribution middle(0.6);
+	std::bernoulli_distribution top(0.8); // 다 else로 빠지는데?
 
-			// caculate..
-			adjacent[0] = _y[index - MAPWIDTH - 1];
-			adjacent[1] = _y[index - MAPWIDTH];
-			adjacent[2] = _y[index - MAPWIDTH + 1];
-			adjacent[3] = _y[index - 1];
-			adjacent[4] = _y[index + 1];
-			adjacent[5] = _y[index + MAPWIDTH - 1];
-			adjacent[6] = _y[index + MAPWIDTH];
-			adjacent[7] = _y[index + MAPWIDTH + 1];;
+	for (int x = 0; x < X; x++) {
+		for (int y = 0; y < Y; y++) {
+			for (int z = Z - 1; z >= 0; z--) {
+				float xnoise = noise(z / noiseScale, y / noiseScale) * amp;
+				float ynoise = noise(x / noiseScale, y / noiseScale) * amp;
+				float znoise = noise(x / noiseScale, z / noiseScale) * amp;
 
-			/*
-			값으로 갯수를 찾아감.(깥은 인덱스 사용..)
-			key[i] : i번째 height의 값.
-			value[i] : i번째 height의 갯수.
-			*/
-			for (int k = 0; k < 8; k++) {
-				for (int z = 0; z < 8; z++) {
-					if (key[z] == adjacent[k]) {
-						value[z]++;
-						break;
+				float density = xnoise + ynoise + znoise + z;
+
+				if (density < threshold && density > 15.f) {
+					currentZ = z * 100;
+					// Check Surface.
+					if (preZ - currentZ != 100) {
+						DeployedBlock = BP_Grass;
+						
 					}
-					else if (key[z] == 0) {
-						key[z] = adjacent[k];
-						value[z]++;
+
+					else {
+						int layer = z / 10;
+					switch (layer) {
+					
+					// Only rock.
+					case 0:
+					case 1:
+					case 3:
+						DeployedBlock = BP_Rock;
 						break;
+
+					case 4:
+					case 5:
+					case 6:
+					case 7:
+						if (middle(eng)) {
+							DeployedBlock = BP_Rock;
+						}
+						else {
+							DeployedBlock = BP_Dirt;
+						}
+						break;
+
+					case 8:
+					case 9:
+						if (top(eng)) {
+							DeployedBlock = BP_Dirt;
+						}
+						else {
+							DeployedBlock = BP_Rock;
+						}
+						break;
+
+					case 10:
+						DeployedBlock = BP_Grass;
+						break;
+
+					default:
+						DeployedBlock = BP_Dirt;
+						break;
+					}				
 					}
+					preZ = currentZ;
+
+					GetWorld()->SpawnActor<ABasicBlock>(DeployedBlock,
+						FVector(x * 100.f, y * 100.f, z * 100.f), FRotator::ZeroRotator);
 				}
 			}
-
-			for (int k = 0; k < 8; k++) {
-				if (threshold < value[k])
-					correct = key[k];
-			}
-
-			if (correct)
-				_y[index] = correct;
 		}
+		preZ = 0;
+		currentZ = 0;
 	}
+		
+}
+
+void AWorldCreater::CreateTreeMap() {
+}
+
+void AWorldCreater::CreateTree(FVector position, int height) {
+	auto Tree = ATreeCreater::StaticClass();
+
+	GetWorld()->SpawnActor<ATreeCreater>(Tree,
+		position + FVector(0.f, 0.f, 100.f * height), FRotator::ZeroRotator);
 }
 
 AWorldCreater::AWorldCreater() {
 	PrimaryActorTick.bCanEverTick = false;
-	float x{};
-	float y{};
 
-	_Position = FVector::ZeroVector;
+	treeMap = new int[X * Y];
 
-	_y = new int[MAPWIDTH * MAPHEIGHT];
-
-	for (int i = 0; i < 512; i++)
-		_s[i] = FMath::RandRange(0, 255);
-
-	for (int i = 0; i < MAPHEIGHT; i++) {
-		for (int j = 0; j < MAPWIDTH; j++) {
-			x = (float)j / (float)MAPWIDTH;
-			y = (float)i / (float)MAPHEIGHT;
-
-			_y[i * MAPHEIGHT + j] = octave(j, i);
-		}
+	// Set random value.
+	for (int i = 0; i < 512; i++) {
+		_param[i] = FMath::RandRange(1, 255);
 	}
+
 }
 
 void AWorldCreater::CreateHeight(FVector position, int height) {
-	height /= 2.f;
 	FString BP_DirtPath = "/Game/Blueprints/BP_Dirt.BP_Dirt_C";
 	FString BP_GrassPath = "/Game/Blueprints/BP_Grass.BP_Grass_C";
 
@@ -169,12 +204,5 @@ void AWorldCreater::CreateHeight(FVector position, int height) {
 void AWorldCreater::BeginPlay() {
 	Super::BeginPlay();
 
-	similar_k_means();
-	for (int i = 0; i < MAPWIDTH; i++) {
-		for (int j = 0; j < MAPHEIGHT; j++) {
-			CreateHeight(_Position, _y[i * MAPWIDTH + j]);
-			_Position += FVector(0.0f, 100.0f, 0.0f);
-		}
-		_Position = FVector(_Position.X + 100.0f, 0.0f, 0.0f);
-	}
+	CreateTerrain();
 }

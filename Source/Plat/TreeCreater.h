@@ -22,8 +22,10 @@ private:
 	void CreateLeaf();
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		USceneComponent* Root;
+	UPROPERTY(EditAnywhere)
+		UStaticMeshComponent* BaseLog;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//	USceneComponent* Root;
 
 private:
 	FVector PlantLocation;
