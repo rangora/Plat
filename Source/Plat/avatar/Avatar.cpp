@@ -110,9 +110,17 @@ void AAvatar::AttackTarget() {
 		if (TargetBlock != nullptr &&
 			HitActor != TargetBlock)
 			TargetBlock->Restore();
+	
 
 		// If target is block.
 		TargetBlock = Cast<ABasicBlock>(HitActor);
+
+		FString temp = TargetBlock->GetFName().ToString();
+		
+
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+			FString::Printf(TEXT("Name : %s"), *temp));
+
 		if (IsValid(TargetBlock) && !TargetBlock->IsPendingKill()) {
 			FDamageEvent DamageEvent;
 			float amountDamage = BASEATTACKPOWER;

@@ -2,6 +2,8 @@
 
 #include "WorldCreater.h"
 #include "TreeCreater.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Math/TransformNonVectorized.h"
 #include <iostream>
 #include <algorithm>
 #include <random>
@@ -74,24 +76,29 @@ float AWorldCreater::octave(int x, int y) {
 void AWorldCreater::CreateTerrain() {
 	FString BP_DirtPath = "/Game/Blueprints/BP_Dirt.BP_Dirt_C";
 	FString BP_GrassPath = "/Game/Blueprints/BP_Grass.BP_Grass_C";
-	FString BP_ProckPath = "/Game/Blueprints/BP_Rock.BP_Rock_C";
+	FString BP_RockPath = "/Game/Blueprints/BP_Rock.BP_Rock_C";
 
 	UClass* BP_Dirt = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_DirtPath));
 	UClass* BP_Grass = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
-	UClass* BP_Rock = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_ProckPath));
-	UClass* DeployedBlock = nullptr;
+	UClass* BP_Rock = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_RockPath));
+	//UClass* DeployedBlock = nullptr;
+
+	Dirt = GetWorld()->SpawnActor<ABasicBlock>(BP_Dirt, FVector::ZeroVector, FRotator::ZeroRotator);
+	Grass = GetWorld()->SpawnActor<ABasicBlock>(BP_Grass, FVector::ZeroVector, FRotator::ZeroRotator);
+	Rock = GetWorld()->SpawnActor<ABasicBlock>(BP_Rock, FVector::ZeroVector, FRotator::ZeroRotator);
 
 	float threshold = 20.0f;
 	float noiseScale = 20.f; // grid를 정의. 높을수록 단순해짐.
 	float amp = 16.f;
 	int preZ{};
 	int currentZ;
+	int real{};
 
 	std::random_device seed;
 	std::default_random_engine eng(seed());
 	std::bernoulli_distribution middle(0.6);
 	std::bernoulli_distribution top(0.8); // 다 else로 빠지는데?
-
+	
 	for (int x = 0; x < X; x++) {
 		for (int y = 0; y < Y; y++) {
 			for (int z = Z - 1; z >= 0; z--) {
@@ -103,65 +110,94 @@ void AWorldCreater::CreateTerrain() {
 
 				if (density < threshold && density > 15.f) {
 					currentZ = z * 100;
-					// Check Surface.
-					if (preZ - currentZ != 100) {
-						DeployedBlock = BP_Grass;
-						
-					}
+					DeployedBlock = Dirt;
 
-					else {
-						int layer = z / 10;
-					switch (layer) {
+					////Check Surface.
+					//if (preZ - currentZ != 100) {
+					//	DeployedBlock = Grass;
+					//}
+
+					//else {
+					//	int layer = z / 10;
+					//switch (layer) {
+					//
+					//// Only rock.
+					//case 0:
+					//case 1:
+					//case 3:
+					//	DeployedBlock = Rock;
+					//	break;
+
+					//case 4:
+					//case 5:
+					//case 6:
+					//case 7:
+					//	if (middle(eng)) {
+					//		DeployedBlock = Rock;
+					//	}
+					//	else {
+					//		DeployedBlock = Dirt;
+					//	}
+					//	break;
+
+					//case 8:
+					//case 9:
+					//	if (top(eng)) {
+					//		DeployedBlock = Dirt;
+					//	}
+					//	else {
+					//		DeployedBlock = Rock;
+					//	}
+					//	break;
+
+					//case 10:
+					//	DeployedBlock = Grass;
+					//	break;
+
+					//default:
+					//	DeployedBlock = Dirt;
+					//	break;
+					//}				
+					//}
+					//preZ = currentZ;
 					
-					// Only rock.
-					case 0:
-					case 1:
-					case 3:
-						DeployedBlock = BP_Rock;
-						break;
+					FVector Local{ x * 100.f, y * 100.f, z * 100.f };
+					auto BlockTransform = FTransform(Local);
 
-					case 4:
-					case 5:
-					case 6:
-					case 7:
-						if (middle(eng)) {
-							DeployedBlock = BP_Rock;
-						}
-						else {
-							DeployedBlock = BP_Dirt;
-						}
-						break;
-
-					case 8:
-					case 9:
-						if (top(eng)) {
-							DeployedBlock = BP_Dirt;
-						}
-						else {
-							DeployedBlock = BP_Rock;
-						}
-						break;
-
-					case 10:
-						DeployedBlock = BP_Grass;
-						break;
-
-					default:
-						DeployedBlock = BP_Dirt;
-						break;
-					}				
-					}
-					preZ = currentZ;
-
-					GetWorld()->SpawnActor<ABasicBlock>(DeployedBlock,
-						FVector(x * 100.f, y * 100.f, z * 100.f), FRotator::ZeroRotator);
+					DeployedBlock->CreateInstance(BlockTransform);
+					real++;
+					
 				}
 			}
 		}
 		preZ = 0;
 		currentZ = 0;
 	}
-		
+
+	//auto size = Dirt->MeshInstances->GetNumMaterials();
+	auto size = Dirt->MeshInstances->GetNumRenderInstances();
+	Dirt->MeshInstances->GetComponentInstanceData();
+
+	Dirt->MeshInstances->GetComponentInstanceData().Cast<ABasicBlock>();
+
+	auto iter = Dirt->MeshInstances->GetComponentInstanceData();
+	auto arr = Dirt->MeshInstances->PerInstanceSMData;
+
+	auto arrNum = arr.Num();
+	auto item = arr.GetData();
+	
+
+
+	FVector targetVector;
+	arr[10].Transform.TransformVector(targetVector);
+
+
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+		FString::Printf(TEXT("size:%d"), size));
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+		FString::Printf(TEXT("real:%d"), real));
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+		FString::Printf(TEXT("arrNum:%d"), arrNum));
 }
 
 void AWorldCreater::CreateTreeMap() {
@@ -176,7 +212,7 @@ void AWorldCreater::CreateTree(FVector position, int height) {
 
 AWorldCreater::AWorldCreater() {
 	PrimaryActorTick.bCanEverTick = false;
-
+	
 	treeMap = new int[X * Y];
 
 	// Set random value.

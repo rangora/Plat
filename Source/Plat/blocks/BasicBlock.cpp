@@ -8,11 +8,14 @@
 ABasicBlock::ABasicBlock() {
 	Super::Name = "BasicBlock";
 
-	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh"));
+	//MeshInstances = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh"));
 	BlockStat = CreateDefaultSubobject<UBasicBlockComponent>(TEXT("BlockStat"));
-	RootComponent = Cast<USceneComponent>(BlockMesh);
+	MeshInstances = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Instance"));
+	RootComponent = Cast<USceneComponent>(MeshInstances);
+	//RootComponent = Cast<USceneComponent>(BlockMesh);
 
-	BlockMesh->SetCollisionProfileName(TEXT("Block"));
+	//BlockMesh->SetCollisionProfileName(TEXT("Block"));
+	MeshInstances->SetCollisionProfileName(TEXT("Block"));
 
 	ItemID = FName("NO_ID");
 	Match = EMatch::NONE;
@@ -36,13 +39,17 @@ void ABasicBlock::DropItem() {
 void ABasicBlock::Restore() {
 	BlockStat->Restore();
 
-	auto Meterials = BlockMesh->GetMaterials();
+	auto Meterials = MeshInstances->GetMaterials();
 	TArray<UMaterialInstanceDynamic*> Instances;
 
 	for (int i = 0; i < Meterials.Num(); ++i) {
-		Instances.Add(BlockMesh->CreateDynamicMaterialInstance(i, Meterials[i]));
+		Instances.Add(MeshInstances->CreateDynamicMaterialInstance(i, Meterials[i]));
 		Instances[i]->SetScalarParameterValue(FName("CrackingValue"), 1.0f);
 	}
+}
+
+void ABasicBlock::BeginPlay() {
+	Super::BeginPlay();
 }
 
 void ABasicBlock::PostInitializeComponents() {
@@ -58,15 +65,15 @@ void ABasicBlock::PostInitializeComponents() {
 float ABasicBlock::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
 	float finalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
-	float CrackingValue = BlockStat->currentHP / 100.f;
-	auto Meterials = BlockMesh->GetMaterials();
-	TArray<UMaterialInstanceDynamic*> Instances;
+	//float CrackingValue = BlockStat->currentHP / 100.f;
+	//auto Meterials = MeshInstances->GetMaterials();
+	//
+	//TArray<UMaterialInstanceDynamic*> Instances;
 
-	for (int i = 0; i < Meterials.Num(); ++i) {
-		Instances.Add(BlockMesh->CreateDynamicMaterialInstance(i, Meterials[i]));
-		Instances[i]->SetScalarParameterValue(FName("CrackingValue"), CrackingValue);
-	}
-
+	//for (int i = 0; i < Meterials.Num(); ++i) {
+	//	Instances.Add(MeshInstances->CreateDynamicMaterialInstance(i, Meterials[i]));
+	//	Instances[i]->SetScalarParameterValue(FName("CrackingValue"), CrackingValue);
+	//}
 	BlockStat->SetDamage(finalDamage);
 	return finalDamage;
 }
@@ -140,4 +147,8 @@ bool ABasicBlock::UseItem(ACharacter* Player, APlayerController* Contrller, UWor
 	}
 
 	return false;
+}
+
+void ABasicBlock::CreateInstance(FTransform& BlockTransform) {
+	MeshInstances->AddInstance(BlockTransform);
 }

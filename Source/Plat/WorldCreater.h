@@ -4,6 +4,7 @@
 
 #include "Plat.h"
 #include "blocks/BasicBlock.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "GameFramework/Actor.h"
 #include "WorldCreater.generated.h"
 
@@ -41,7 +42,13 @@ public:
 
 	FVector _Position;
 
+public:
+	ABasicBlock* Dirt;
+	ABasicBlock* Grass;
+	ABasicBlock* Rock;
+
 private:
+	ABasicBlock* DeployedBlock;
 	float _scalingBias = 2.0f;
 	int _octaves = 8;
 	int* treeMap = nullptr;
