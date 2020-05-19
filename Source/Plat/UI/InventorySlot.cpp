@@ -3,6 +3,7 @@
 #include "InventorySlot.h"
 #include "avatar/Avatar.h"
 #include "system/AvatarController.h"
+#include "system/SandBoxState.h"
 #include "blocks/BasicBlock.h"
 #include "UI/DragDropSlot.h"
 #include "Item/CBlockData.h"
@@ -50,9 +51,11 @@ void UInventorySlot::Refresh() {
 }
 
 bool UInventorySlot::UseItem() {
+	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+
 	switch (ItemType) {
 	case EItemType::BLOCK:
-		if (!ABasicBlock::UseItem(IPlayer, IController, GetWorld(), ItemName))
+		if (!CurrentState->UseBlockItem(IPlayer, ItemName))
 			return false;
 		break;
 

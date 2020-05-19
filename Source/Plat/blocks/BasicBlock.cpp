@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "BasicBlock.h"
+#include "system/SandBoxState.h"
 #include "avatar/Avatar.h"
 #include "system/AvatarController.h"
 #include "item/AutoPickup.h"
@@ -21,7 +22,7 @@ ABasicBlock::ABasicBlock() {
 	Match = EMatch::NONE;
 }
 
-void ABasicBlock::DropItem() {
+void ABasicBlock::DropItem(FVector DropLocation) {
 	if (Name.Equals("BasicBlock"))
 		return;
 	else {
@@ -29,7 +30,7 @@ void ABasicBlock::DropItem() {
 		UClass* BP_Item = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_ItemPath));
 
 		if (IsValid(BP_Item)) {
-			FVector DropLocation = GetActorLocation();
+			//FVector DropLocation = GetActorLocation();
 			GetWorld()->SpawnActor<AAutoPickup>(BP_Item,
 				DropLocation, FRotator::ZeroRotator);
 		}
@@ -57,7 +58,7 @@ void ABasicBlock::PostInitializeComponents() {
 
 	BlockStat->OnHPIsZero.AddLambda([this]() {
 		SetActorEnableCollision(false);
-		DropItem();
+		DropItem(GetActorLocation());
 		Destroy();
 		});
 }
@@ -76,77 +77,6 @@ float ABasicBlock::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 	//}
 	BlockStat->SetDamage(finalDamage);
 	return finalDamage;
-}
-
-bool ABasicBlock::UseItem(ACharacter* Player, APlayerController* Contrller, UWorld* World, FString BlockName) {
-	FString BP_GrassPath = "/Game/Blueprints/BP_" + BlockName + "." + "BP_" + BlockName + "_C";
-	UClass* BP_Block = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
-
-	if (!IsValid(BP_Block))
-		return false;
-
-	auto IPlayer = Cast<AAvatar>(Player);
-	auto IController = Cast<AAvatarController>(Contrller);
-	auto CameraComponent = IPlayer->GetCameraComponent();
-
-	FVector Start = CameraComponent->GetComponentLocation();
-	FVector End = (CameraComponent->GetForwardVector() * IPlayer->interactRange) + Start;
-
-	FHitResult CollisionResult;
-	FCollisionQueryParams Params(NAME_None, false, IPlayer);
-	bool bResult = World->SweepSingleByChannel(
-		CollisionResult,
-		Start,
-		End,
-		FQuat::Identity,
-		ECollisionChannel::ECC_GameTraceChannel1,
-		FCollisionShape::MakeSphere((1, 1, 1)),
-		Params);
-
-	if (bResult) {
-		auto _hitLocation = CollisionResult.Location;
-		auto _blockActor = CollisionResult.GetActor();
-
-		FVector _targetLocation = _blockActor->GetActorLocation();
-		FVector _deployLocation = _targetLocation;
-		FVector _diff = _targetLocation - _hitLocation;
-
-		if (_diff.X < -50.f)
-			_deployLocation.X += 100;
-		else if (_diff.X > 50.f)
-			_deployLocation.X -= 100;
-		else if (_diff.Y < -50.f)
-			_deployLocation.Y += 100;
-		else if (_diff.Y > 50.f)
-			_deployLocation.Y -= 100;
-		else if (_diff.Z < -50.f)
-			_deployLocation.Z += 100;
-		else if (_diff.Z > 50.f)
-			_deployLocation.Z -= 100;
-
-		FVector CharaLocation = IPlayer->GetCapsuleComponent()->GetComponentLocation();
-		CharaLocation.X = FMath::RoundToInt(CharaLocation.X / 100.f) * 100;
-		CharaLocation.Y = FMath::RoundToInt(CharaLocation.Y / 100.f) * 100;
-		CharaLocation.Z = int(CharaLocation.Z) / 100 * 100;
-
-		FVector MiddleLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 100.f);
-		FVector TopLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 200.f);
-
-		// Check collision between player and block will be deployed.
-		if (CharaLocation.Equals(_deployLocation) ||
-			MiddleLocation.Equals(_deployLocation) ||
-			TopLocation.Equals(_deployLocation)) {
-			return false;
-		}
-
-		// Build the block.
-		else {
-			World->SpawnActor<ABasicBlock>(BP_Block, _deployLocation, FRotator::ZeroRotator);
-			return true;
-		}
-	}
-
-	return false;
 }
 
 void ABasicBlock::CreateInstance(FTransform& BlockTransform) {

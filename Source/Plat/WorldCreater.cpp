@@ -4,6 +4,7 @@
 #include "TreeCreater.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Math/TransformNonVectorized.h"
+#include "system/SandBoxState.h"
 #include <iostream>
 #include <algorithm>
 #include <random>
@@ -174,30 +175,92 @@ void AWorldCreater::CreateTerrain() {
 		currentZ = 0;
 	}
 
-	//auto size = Dirt->MeshInstances->GetNumMaterials();
-	auto size = Dirt->MeshInstances->GetNumRenderInstances();
-	Dirt->MeshInstances->GetComponentInstanceData();
+	////auto size = Dirt->MeshInstances->GetNumMaterials();
+	//auto size = Dirt->MeshInstances->GetNumRenderInstances();
+	//Dirt->MeshInstances->GetComponentInstanceData();
 
-	Dirt->MeshInstances->GetComponentInstanceData().Cast<ABasicBlock>();
+	////auto iter2 = Dirt->MeshInstances->GetComponentInstanceData().Cast<ABasicBlock>();
 
-	auto iter = Dirt->MeshInstances->GetComponentInstanceData();
-	auto arr = Dirt->MeshInstances->PerInstanceSMData;
+	//auto iter = Dirt->MeshInstances->GetComponentInstanceData();
+	//auto arr = Dirt->MeshInstances->PerInstanceSMData;
 
-	auto arrNum = arr.Num();
-	auto item = arr.GetData();
+	//Dirt->MeshInstances;
+
+	//auto arrNum = arr.Num();
+	//auto item = arr.GetData();
+	////auto tt = item->Transform.TransformVector();
 	
 
 
-	FVector targetVector;
-	arr[10].Transform.TransformVector(targetVector);
+	//FVector targetVector;
+	//arr[10].Transform.TransformVector(targetVector);
 
 
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-		FString::Printf(TEXT("size:%d"), size));
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-		FString::Printf(TEXT("real:%d"), real));
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-		FString::Printf(TEXT("arrNum:%d"), arrNum));
+	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+	//	FString::Printf(TEXT("size:%d"), size));
+	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+	//	FString::Printf(TEXT("real:%d"), real));
+	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+	//	FString::Printf(TEXT("arrNum:%d"), arrNum));
+}
+
+void AWorldCreater::TestCreater() {
+	FString BP_DirtPath = "/Game/Blueprints/BP_Dirt.BP_Dirt_C";
+	FString BP_GrassPath = "/Game/Blueprints/BP_Grass.BP_Grass_C";
+	FString BP_RockPath = "/Game/Blueprints/BP_Rock.BP_Rock_C";
+
+	UClass* BP_Dirt = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_DirtPath));
+	UClass* BP_Grass = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
+	UClass* BP_Rock = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_RockPath));
+	//UClass* DeployedBlock = nullptr;
+
+	Dirt = GetWorld()->SpawnActor<ABasicBlock>(BP_Dirt, FVector::ZeroVector, FRotator::ZeroRotator);
+	Grass = GetWorld()->SpawnActor<ABasicBlock>(BP_Grass, FVector::ZeroVector, FRotator::ZeroRotator);
+	Rock = GetWorld()->SpawnActor<ABasicBlock>(BP_Rock, FVector::ZeroVector, FRotator::ZeroRotator);
+
+	DeployedBlock = Dirt;
+
+	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+
+	int cnt{};
+
+	for (int i = 0; i < 1; i++) {
+		for (int j = 0; j < 10; j++) {
+			for (int k = 0; k < 10; k++) {
+				FVector Local{ k * 100.f + 100.f, j * 100.f + 100.f, i * 100.f + 100.f };
+				auto BlockTransform = FTransform(Local);
+				FString localString = Local.ToString();
+				
+				DeployedBlock->CreateInstance(BlockTransform);
+				
+				auto tempPair{ TPair<int, FString>(cnt, localString) };
+				CurrentState->BlockTable.Add(tempPair);
+				cnt++;
+			}
+
+		}
+	}
+
+	for (int i = 0; i < 10; i++) {
+		FVector Local{100.f + 800.f, i * 100.f + 100.f, 100.f + 100.f };
+		auto BlockTransform = FTransform(Local);
+		FString localString = Local.ToString();
+
+		DeployedBlock->CreateInstance(BlockTransform);
+
+		auto tempPair{ TPair<int, FString>(cnt, localString) };
+		CurrentState->BlockTable.Add(tempPair);
+		cnt++;
+	}
+			
+	auto n1 = CurrentState->BlockTable.Num();
+	auto n2 = cnt;
+
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+		FString::Printf(TEXT("n1 : %d"), n1));
+
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+		FString::Printf(TEXT("n2 : %d"), n2));
 }
 
 void AWorldCreater::CreateTreeMap() {
@@ -240,5 +303,6 @@ void AWorldCreater::CreateHeight(FVector position, int height) {
 void AWorldCreater::BeginPlay() {
 	Super::BeginPlay();
 
-	CreateTerrain();
+	//CreateTerrain();
+	TestCreater();
 }

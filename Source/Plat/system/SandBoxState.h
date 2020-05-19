@@ -5,12 +5,15 @@
 #include "Plat.h"
 #include "Engine.h"
 #include "GameFramework/GameStateBase.h"
+#include "Serialization/StructuredArchive.h"
 #include "item/CBaseItemData.h"
 #include "SandBoxState.generated.h"
 
 /**
  *
  */
+
+class AWorldCreater;
 
 UCLASS()
 class PLAT_API ASandBoxState : public AGameStateBase {
@@ -19,10 +22,16 @@ class PLAT_API ASandBoxState : public AGameStateBase {
 public:
 	ASandBoxState();
 
+	virtual void BeginPlay() override;
+
 	UDataTable* GetBaseDB() const;
 	UDataTable* GetBlockDB() const;
 	UDataTable* GetEquipmentDB() const;
 
+	/* Using Item */
+	bool UseBlockItem(ACharacter* Player, FString BlockName);
+
+public:
 	UPROPERTY(EditDefaultsOnly)
 		class UDataTable* BaseDB;
 
@@ -31,4 +40,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 		class UDataTable* BlockDB;
+
+
+	TArray<TPair<int, FString>> BlockTable;
+
+
+	AWorldCreater* WorldCreater;
 };

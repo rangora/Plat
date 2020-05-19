@@ -20,14 +20,13 @@ class PLAT_API ABasicBlock : public ABlock {
 public:
 	ABasicBlock();
 
-	void DropItem();
+	void DropItem(FVector DropLocation);
 	void Restore();
 
 	virtual void BeginPlay() override;
 	virtual void PostInitializeComponents() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-	static bool UseItem(ACharacter* Player, APlayerController* Contrller, UWorld* World, FString BlockName);
 	void CreateInstance(FTransform& BlockTransform);
 
 public:
@@ -45,8 +44,6 @@ protected:
 
 	
 
-	//UPROPERTY(EditAnywhere)
-	//	UStaticMeshComponent* MeshInstances;
 
 	UPROPERTY(VisibleAnywhere)
 		class UBasicBlockComponent* BlockStat;

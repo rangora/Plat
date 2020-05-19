@@ -101,25 +101,73 @@ void AAvatar::AttackTarget() {
 		End,
 		FQuat::Identity,
 		ECollisionChannel::ECC_GameTraceChannel1,
-		FCollisionShape::MakeSphere(AttackRadius),
+		FCollisionShape::MakeSphere(1.f),
 		Params);
+
+	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 3.0f);
+	auto HitLocation = HitResult.Location.ToString();
 
 	if (bResult) {
 		auto HitActor = HitResult.GetActor();
+		auto HitLocation = HitResult.Location;
+		auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
 
-		if (TargetBlock != nullptr &&
-			HitActor != TargetBlock)
+		FVector BlockLocation;
+		FVector CameraLocation = CameraComponent->GetComponentLocation();
+		TPair<int, FString>* TargetPair = nullptr;
+
+		if (TargetBlock != nullptr && HitActor != TargetBlock)
 			TargetBlock->Restore();
 	
-
-		// If target is block.
 		TargetBlock = Cast<ABasicBlock>(HitActor);
-
-		FString temp = TargetBlock->GetFName().ToString();
 		
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+			FString::Printf(TEXT("HitLocation : %s"), *HitLocation.ToString()));
 
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-			FString::Printf(TEXT("Name : %s"), *temp));
+
+		// Calculate the hit location to block deployed location.	
+		BlockLocation = GetTargetBlockLocation(HitLocation);
+		
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+			FString::Printf(TEXT("BlockLocation : %s"), *BlockLocation.ToString()));
+
+
+		// Get target block data from BlockTable using BlockLocation.
+		for (auto iter : CurrentState->BlockTable) {
+			if (iter.Value.Equals(BlockLocation.ToString())) {
+				TargetPair = &iter;
+				break;
+			}
+		}
+
+		if (TargetPair) {
+			int targetIndex = TargetPair->Key;
+			// Remove the block instance.
+			if (TargetBlock->MeshInstances->RemoveInstance(targetIndex)) {
+			
+				// Remove the block data from BlockTable and refresh the key values.
+				for (int i = targetIndex + 1; i < CurrentState->BlockTable.Num(); i++) {
+					if(CurrentState->BlockTable.IsValidIndex(i))
+						CurrentState->BlockTable[i].Key -= 1;
+				}
+
+				if(CurrentState->BlockTable.IsValidIndex(targetIndex))
+					CurrentState->BlockTable.RemoveAt(targetIndex);
+				
+				// Extra processing after block meta data.
+				TargetBlock->DropItem(BlockLocation);
+
+
+				//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+				//	FString::Printf(TEXT("After remove... instances:%d table:%d"), 
+				//		TargetBlock->MeshInstances->GetNumRenderInstances(),
+				//		CurrentState->BlockTable.Num()));
+			}
+		}
+		else {
+			//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+			//	FString::Printf(TEXT("No Target Pair, Hitted at : %s"), *BlockLocation.ToString()));
+		}
 
 		if (IsValid(TargetBlock) && !TargetBlock->IsPendingKill()) {
 			FDamageEvent DamageEvent;
@@ -135,6 +183,7 @@ void AAvatar::AttackTarget() {
 			HitActor->TakeDamage(amountDamage, DamageEvent, GetController(), this);
 		}
 	}
+	// No bResult.
 	else {
 		if (IsValid(TargetBlock) && !TargetBlock->IsPendingKill()) {
 			TargetBlock->Restore();
@@ -194,6 +243,28 @@ void AAvatar::CollectAutoPickups() {
 		if (TestPickup && !TestPickup->IsPendingKill())
 			TestPickup->Collect(IController);
 	}
+}
+
+FVector AAvatar::GetTargetBlockLocation(FVector HitLocation) {
+	FVector BlockLocation;
+
+	if (int((HitLocation.X + 2.f) / 100.f) > int(HitLocation.X / 100.f))
+		BlockLocation.X = FMath::FloorToFloat((HitLocation.X + 2.f) / 100.f) * 100.f;
+	else
+		BlockLocation.X = FMath::FloorToFloat((HitLocation.X - 2.f) / 100.f) * 100.f;
+
+	if (int((HitLocation.Y + 2.f) / 100.f) > int(HitLocation.Y / 100.f))
+		BlockLocation.Y = FMath::FloorToFloat((HitLocation.Y + 2.f) / 100.f) * 100.f;
+	else
+		BlockLocation.Y = FMath::FloorToFloat((HitLocation.Y - 2.f) / 100.f) * 100.f;
+
+	if (int((HitLocation.Z + 2.f) / 100.f) > int(HitLocation.Z / 100.f))
+		BlockLocation.Z = FMath::FloorToFloat((HitLocation.Z + 2.f) / 100.f) * 100.f;
+	else
+		BlockLocation.Z = FMath::FloorToFloat((HitLocation.Z - 2.f) / 100.f) * 100.f;
+
+
+	return BlockLocation;
 }
 
 void AAvatar::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted) {
