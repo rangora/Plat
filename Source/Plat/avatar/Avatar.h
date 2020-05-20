@@ -48,8 +48,9 @@ public:
 	/* 범위 내 대해서 AutoPuckup함수 발동. */
 	void CollectAutoPickups();
 
-	/* Block interagtion */
-	FVector GetTargetBlockLocation(FVector HitLocation);
+	/* Block Interaction */
+	FVector GetBlockLocation(FVector HitLocation);
+
 
 protected:
 	virtual void BeginPlay() override;
@@ -69,6 +70,11 @@ private:
 	void OnHit();
 	void AttackTarget();
 	void EndHit();
+
+	/* Block Interaction */
+	AActor* GetForwardBlock(FVector* HitLocation = nullptr);
+	//FVector GetBlockLocation(FVector HitLocation);
+	bool DestroyHitBlock(AActor* HitActor, FVector& BlockLocation);
 
 	/* Attack animation. not interaction. */
 	void AttackAnim();
@@ -111,7 +117,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 		AEquipment* Weapon;
 
-	/* Collection sphere for auto puckup. */
+	/* Collection sphere for auto pickup. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USphereComponent* CollectionSphere;
 };

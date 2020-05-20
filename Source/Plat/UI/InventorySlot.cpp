@@ -55,7 +55,7 @@ bool UInventorySlot::UseItem() {
 
 	switch (ItemType) {
 	case EItemType::BLOCK:
-		if (!CurrentState->UseBlockItem(IPlayer, ItemName))
+		if (!CurrentState->UseBlockItem(IPlayer, ItemID, ItemName))
 			return false;
 		break;
 

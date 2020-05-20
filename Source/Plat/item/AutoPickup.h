@@ -39,4 +39,6 @@ protected:
 
 private:
 	float rotateSpeed;
+
+	bool bIsCollecting = false;
 };

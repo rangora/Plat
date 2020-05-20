@@ -20,6 +20,7 @@ ABasicBlock::ABasicBlock() {
 
 	ItemID = FName("NO_ID");
 	Match = EMatch::NONE;
+	maxHP = 100.f;
 }
 
 void ABasicBlock::DropItem(FVector DropLocation) {
@@ -77,6 +78,10 @@ float ABasicBlock::TakeDamage(float DamageAmount, FDamageEvent const& DamageEven
 	//}
 	BlockStat->SetDamage(finalDamage);
 	return finalDamage;
+}
+
+const FName ABasicBlock::GetItemID() const {
+	return ItemID;
 }
 
 void ABasicBlock::CreateInstance(FTransform& BlockTransform) {

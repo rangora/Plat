@@ -13,6 +13,8 @@
  *
  */
 
+typedef TPair<int, FString> BlockData;
+
 class AWorldCreater;
 
 UCLASS()
@@ -28,8 +30,10 @@ public:
 	UDataTable* GetBlockDB() const;
 	UDataTable* GetEquipmentDB() const;
 
+	TArray<BlockData>* GetBlockTable(FName ItemID);
+
 	/* Using Item */
-	bool UseBlockItem(ACharacter* Player, FString BlockName);
+	bool UseBlockItem(ACharacter* Player, FName ItemID, FString BlockName);
 
 public:
 	UPROPERTY(EditDefaultsOnly)
@@ -42,8 +46,11 @@ public:
 		class UDataTable* BlockDB;
 
 
-	TArray<TPair<int, FString>> BlockTable;
-
+	TArray<BlockData> DirtTable;
+	TArray<BlockData> GrassTable;
+	TArray<BlockData> RockTable;
+	TArray<BlockData> TreeTable;
+	TArray<BlockData> leafTable;
 
 	AWorldCreater* WorldCreater;
 };

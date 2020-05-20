@@ -27,7 +27,6 @@ private:
 
 
 	void CreateTerrain();
-	void TestCreater();
 	void CreateTreeMap();
 	void CreateTree(FVector position, int height);
 
@@ -44,9 +43,10 @@ public:
 	FVector _Position;
 
 public:
-	ABasicBlock* Dirt = nullptr;
+	ABasicBlock* Dirt;
 	ABasicBlock* Grass;
 	ABasicBlock* Rock;
+	ABasicBlock* Tree;
 
 private:
 	ABasicBlock* DeployedBlock;
@@ -54,4 +54,11 @@ private:
 	int _octaves = 8;
 	int* treeMap = nullptr;
 	int _param[512];
+
+	/* Block Count */
+	size_t DirtCount;
+	size_t GrassCount;
+	size_t RockCount;
+	size_t LeafCount;
+	size_t TreeCount;
 };

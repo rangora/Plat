@@ -27,6 +27,8 @@ public:
 	virtual void PostInitializeComponents() override;
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
+	const FName GetItemID() const;
+
 	void CreateInstance(FTransform& BlockTransform);
 
 public:
@@ -37,13 +39,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		class UInstancedStaticMeshComponent* MeshInstances;
 
+	float maxHP;
+
 protected:
 	/* Unique value. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FName ItemID;
-
-	
-
 
 	UPROPERTY(VisibleAnywhere)
 		class UBasicBlockComponent* BlockStat;

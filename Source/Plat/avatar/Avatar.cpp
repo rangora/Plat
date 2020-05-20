@@ -90,10 +90,25 @@ void AAvatar::Turn(float newAxisValue) {
 }
 
 void AAvatar::AttackTarget() {
+	FVector HitLocation;
+	AActor* HitActor = GetForwardBlock(&HitLocation);
+
+	// Validation check.
+	if (IsValid(HitActor)) {
+		// Get location of a hit block.	
+		FVector BlockLocation = GetBlockLocation(HitLocation);
+
+		// Destroy the block.
+		if (DestroyHitBlock(HitActor, BlockLocation)) {};
+	}
+}
+
+AActor* AAvatar::GetForwardBlock(FVector* HitLocation) {
 	FVector Start = CameraComponent->GetComponentLocation();
 	FVector End = (CameraComponent->GetForwardVector() * AttackRange) + Start;
-
+	
 	FHitResult HitResult;
+	
 	FCollisionQueryParams Params(NAME_None, false, this);
 	bool bResult = GetWorld()->SweepSingleByChannel(
 		HitResult,
@@ -105,91 +120,61 @@ void AAvatar::AttackTarget() {
 		Params);
 
 	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 3.0f);
-	auto HitLocation = HitResult.Location.ToString();
 
 	if (bResult) {
-		auto HitActor = HitResult.GetActor();
-		auto HitLocation = HitResult.Location;
-		auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
-
-		FVector BlockLocation;
-		FVector CameraLocation = CameraComponent->GetComponentLocation();
-		TPair<int, FString>* TargetPair = nullptr;
-
-		if (TargetBlock != nullptr && HitActor != TargetBlock)
-			TargetBlock->Restore();
-	
-		TargetBlock = Cast<ABasicBlock>(HitActor);
-		
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
-			FString::Printf(TEXT("HitLocation : %s"), *HitLocation.ToString()));
-
-
-		// Calculate the hit location to block deployed location.	
-		BlockLocation = GetTargetBlockLocation(HitLocation);
-		
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
-			FString::Printf(TEXT("BlockLocation : %s"), *BlockLocation.ToString()));
-
-
-		// Get target block data from BlockTable using BlockLocation.
-		for (auto iter : CurrentState->BlockTable) {
-			if (iter.Value.Equals(BlockLocation.ToString())) {
-				TargetPair = &iter;
-				break;
-			}
+		if (HitLocation) {
+			*HitLocation = HitResult.Location;
 		}
+		return HitResult.GetActor();
+	}
+	return nullptr;
+}
 
-		if (TargetPair) {
-			int targetIndex = TargetPair->Key;
-			// Remove the block instance.
-			if (TargetBlock->MeshInstances->RemoveInstance(targetIndex)) {
-			
-				// Remove the block data from BlockTable and refresh the key values.
-				for (int i = targetIndex + 1; i < CurrentState->BlockTable.Num(); i++) {
-					if(CurrentState->BlockTable.IsValidIndex(i))
-						CurrentState->BlockTable[i].Key -= 1;
-				}
+bool AAvatar::DestroyHitBlock(AActor* HitActor, FVector& BlockLocation) {
+	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
 
-				if(CurrentState->BlockTable.IsValidIndex(targetIndex))
-					CurrentState->BlockTable.RemoveAt(targetIndex);
-				
-				// Extra processing after block meta data.
-				TargetBlock->DropItem(BlockLocation);
+	BlockData* TargetBlockData = nullptr;
+	TArray<BlockData>* BlockTable;
 
+	TargetBlock = Cast<ABasicBlock>(HitActor);
 
-				//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
-				//	FString::Printf(TEXT("After remove... instances:%d table:%d"), 
-				//		TargetBlock->MeshInstances->GetNumRenderInstances(),
-				//		CurrentState->BlockTable.Num()));
-			}
-		}
-		else {
-			//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
-			//	FString::Printf(TEXT("No Target Pair, Hitted at : %s"), *BlockLocation.ToString()));
-		}
+	// Decision to type of the type and get the table.
+	BlockTable = CurrentState->GetBlockTable(TargetBlock->GetItemID());
 
-		if (IsValid(TargetBlock) && !TargetBlock->IsPendingKill()) {
-			FDamageEvent DamageEvent;
-			float amountDamage = BASEATTACKPOWER;
-
-			if (Weapon != nullptr) {
-				amountDamage = Weapon->damage;
-
-				if (Weapon->Match == TargetBlock->Match) {
-					amountDamage = Weapon->adDamage;
-				}
-			}
-			HitActor->TakeDamage(amountDamage, DamageEvent, GetController(), this);
+	// Get target block data from BlockTable using BlockLocation.
+	for (auto iter : *BlockTable) {
+		if (iter.Value.Equals(BlockLocation.ToString())) {
+			TargetBlockData = &iter;
+			break;
 		}
 	}
-	// No bResult.
-	else {
-		if (IsValid(TargetBlock) && !TargetBlock->IsPendingKill()) {
-			TargetBlock->Restore();
-			TargetBlock = nullptr;
+
+	if (TargetBlockData) {
+		int targetIndex = TargetBlockData->Key;
+		// Remove the block instance.
+		if (TargetBlock->MeshInstances->RemoveInstance(targetIndex)) {
+
+			// Remove the block data from BlockTable and refresh the key values.
+			for (int i = targetIndex + 1; i < BlockTable->Num(); i++) {
+				if (BlockTable->IsValidIndex(i))
+					(*BlockTable)[i].Key -= 1;
+			}
+
+			if (BlockTable->IsValidIndex(targetIndex))
+				BlockTable->RemoveAt(targetIndex);
+
+			// Spawn pick up item.
+			TargetBlock->DropItem(FVector(BlockLocation.X + 50.f, BlockLocation.Y + 50.f, BlockLocation.Z + 50.f));
+
+			//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+			//	FString::Printf(TEXT("After remove... instances:%d table:%d"),
+			//		TargetBlock->MeshInstances->GetNumRenderInstances(),
+			//		BlockTable->Num()));
+			return true;
 		}
 	}
+
+	return false;
 }
 
 void AAvatar::OnHit() {
@@ -245,7 +230,7 @@ void AAvatar::CollectAutoPickups() {
 	}
 }
 
-FVector AAvatar::GetTargetBlockLocation(FVector HitLocation) {
+FVector AAvatar::GetBlockLocation(FVector HitLocation) {
 	FVector BlockLocation;
 
 	if (int((HitLocation.X + 2.f) / 100.f) > int(HitLocation.X / 100.f))

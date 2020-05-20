@@ -19,7 +19,7 @@ void ASandBoxState::BeginPlay() {
 
 	auto WorldCreaterClass = AWorldCreater::StaticClass();
 	
-	WorldCreater = GetWorld()->SpawnActor<AWorldCreater>(WorldCreaterClass, 
+	WorldCreater = GetWorld()->SpawnActor<AWorldCreater>(AWorldCreater::StaticClass(),
 		FVector(100.f, 100.f, 100.f), FRotator::ZeroRotator);
 }
 
@@ -35,9 +35,30 @@ UDataTable* ASandBoxState::GetEquipmentDB() const {
 	return EquipmentDB;
 }
 
-bool ASandBoxState::UseBlockItem(ACharacter* Player, FString BlockName) {
+TArray<BlockData>* ASandBoxState::GetBlockTable(FName ItemID) {
+	int id = FCString::Atoi(*ItemID.ToString());
+
+	switch (id) {
+	case 1:
+		return &DirtTable;
+	case 2:
+		return &GrassTable;
+	case 3:
+		return &TreeTable;
+	case 5:
+		return &RockTable;
+	default:
+		break;
+	}
+
+	return nullptr;
+}
+
+bool ASandBoxState::UseBlockItem(ACharacter* Player, FName ItemID, FString BlockName) {
 	FString BP_GrassPath = "/Game/Blueprints/BP_" + BlockName + "." + "BP_" + BlockName + "_C";
 	UClass* BP_Block = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
+
+	TArray<BlockData>* BlockTable = GetBlockTable(ItemID);
 
 	if (!IsValid(BP_Block))
 		return false;
@@ -66,7 +87,7 @@ bool ASandBoxState::UseBlockItem(ACharacter* Player, FString BlockName) {
 		FVector Diff;
 		auto HitLocation = CollisionResult.Location;
 
-		TargetLocation = IPlayer->GetTargetBlockLocation(HitLocation);
+		TargetLocation = IPlayer->GetBlockLocation(HitLocation);
 		DeployLocation = TargetLocation;
 		Diff = TargetLocation - HitLocation;
 
@@ -113,6 +134,12 @@ bool ASandBoxState::UseBlockItem(ACharacter* Player, FString BlockName) {
 			// Find block actor.
 			if (BlockName.Equals("Dirt"))
 				UsingBlock = WorldCreater->Dirt;
+			else if(BlockName.Equals("Grass"))
+				UsingBlock = WorldCreater->Grass;
+			else if (BlockName.Equals("Tree"))
+				UsingBlock = WorldCreater->Tree;
+			else if (BlockName.Equals("Rock"))
+				UsingBlock = WorldCreater->Rock;
 
 			// Validation check of UsingBlock.
 			if (UsingBlock) {
@@ -120,7 +147,7 @@ bool ASandBoxState::UseBlockItem(ACharacter* Player, FString BlockName) {
 				int index = UsingBlock->MeshInstances->GetNumRenderInstances() - 1;
 
 				auto BlockData{ TPair<int, FString>(index, StrTransform) };
-				BlockTable.Add(BlockData);
+				BlockTable->Add(BlockData);
 
 				return true;
 			}

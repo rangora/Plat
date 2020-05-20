@@ -27,15 +27,20 @@ void AAutoPickup::Tick(float DeltaTime) {
 
 
 void AAutoPickup::Collect_Implementation(APlayerController* Controller) {
+	float speed = 0.03;
+
 	AAvatarController* IController = Cast<AAvatarController>(Controller);
 	AAvatar* IPlayer = Cast<AAvatar>(IController->GetCharacter());
 
-	float speed = 0.03;
 	FVector PlayerLocation = IPlayer->GetActorLocation();
-	PlayerLocation.Z += 55.f;
 	FVector Direction = PlayerLocation - GetTransform().GetLocation();
 	FVector NewLocation = GetTransform().GetLocation() + (Direction * speed);
 
+	
+	bIsCollecting = true;
+	PickupMesh->SetEnableGravity(false);
+
+	PlayerLocation.Z += 55.f;
 	SetActorLocation(NewLocation);
 }
 
