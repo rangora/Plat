@@ -16,4 +16,8 @@ public:
 public:
 	UPROPERTY(EditDefaultsOnly)
 		FString Name;
+
+	/* Unique value. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		FName ItemID;
 };

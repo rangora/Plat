@@ -2,6 +2,7 @@
 
 #include "BasicBlock.h"
 #include "system/SandBoxState.h"
+#include "blocks/CrackingMesh.h"
 #include "avatar/Avatar.h"
 #include "system/AvatarController.h"
 #include "item/AutoPickup.h"
@@ -9,18 +10,15 @@
 ABasicBlock::ABasicBlock() {
 	Super::Name = "BasicBlock";
 
-	//MeshInstances = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh"));
-	BlockStat = CreateDefaultSubobject<UBasicBlockComponent>(TEXT("BlockStat"));
 	MeshInstances = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Instance"));
 	RootComponent = Cast<USceneComponent>(MeshInstances);
-	//RootComponent = Cast<USceneComponent>(BlockMesh);
 
-	//BlockMesh->SetCollisionProfileName(TEXT("Block"));
 	MeshInstances->SetCollisionProfileName(TEXT("Block"));
 
 	ItemID = FName("NO_ID");
 	Match = EMatch::NONE;
 	maxHP = 100.f;
+	currentHP = 100.f;
 }
 
 void ABasicBlock::DropItem(FVector DropLocation) {
@@ -38,46 +36,11 @@ void ABasicBlock::DropItem(FVector DropLocation) {
 	}
 }
 
-void ABasicBlock::Restore() {
-	BlockStat->Restore();
-
-	auto Meterials = MeshInstances->GetMaterials();
-	TArray<UMaterialInstanceDynamic*> Instances;
-
-	for (int i = 0; i < Meterials.Num(); ++i) {
-		Instances.Add(MeshInstances->CreateDynamicMaterialInstance(i, Meterials[i]));
-		Instances[i]->SetScalarParameterValue(FName("CrackingValue"), 1.0f);
-	}
-}
-
-void ABasicBlock::BeginPlay() {
-	Super::BeginPlay();
-}
-
-void ABasicBlock::PostInitializeComponents() {
-	Super::PostInitializeComponents();
-
-	BlockStat->OnHPIsZero.AddLambda([this]() {
-		SetActorEnableCollision(false);
-		DropItem(GetActorLocation());
-		Destroy();
-		});
-}
-
-float ABasicBlock::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) {
-	float finalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-
-	//float CrackingValue = BlockStat->currentHP / 100.f;
-	//auto Meterials = MeshInstances->GetMaterials();
-	//
-	//TArray<UMaterialInstanceDynamic*> Instances;
-
-	//for (int i = 0; i < Meterials.Num(); ++i) {
-	//	Instances.Add(MeshInstances->CreateDynamicMaterialInstance(i, Meterials[i]));
-	//	Instances[i]->SetScalarParameterValue(FName("CrackingValue"), CrackingValue);
-	//}
-	BlockStat->SetDamage(finalDamage);
-	return finalDamage;
+void ABasicBlock::Reset() {
+	currentHP = maxHP;
+	instanceIndex = -1;
+	BlockLocation = FVector{ -1.f, -1.f, -1.f };
+	CrackingEffect->Destroy();
 }
 
 const FName ABasicBlock::GetItemID() const {
@@ -86,4 +49,19 @@ const FName ABasicBlock::GetItemID() const {
 
 void ABasicBlock::CreateInstance(FTransform& BlockTransform) {
 	MeshInstances->AddInstance(BlockTransform);
+}
+
+void ABasicBlock::Breaking() {
+	float CrackingValue = (maxHP - currentHP) / 100.f;
+
+	FVector loc = FVector{ BlockLocation.X + 50.f, BlockLocation.Y + 50.f, BlockLocation.Z + 50.f };
+
+	if(!IsValid(CrackingEffect))
+		CrackingEffect = GetWorld()->SpawnActor<ACrackingMesh>(ACrackingMesh::StaticClass(), loc, FRotator::ZeroRotator);
+	
+	auto Cracking = CrackingEffect->Crack->CreateDynamicMaterialInstance(0);
+
+	if (Cracking != nullptr) {
+		Cracking->SetScalarParameterValue(FName("CrackingValue"), CrackingValue);
+	}
 }

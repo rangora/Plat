@@ -31,6 +31,7 @@ public:
 	UDataTable* GetEquipmentDB() const;
 
 	TArray<BlockData>* GetBlockTable(FName ItemID);
+	AActor* GetMetaBlock(FName ItemID);
 
 	/* Using Item */
 	bool UseBlockItem(ACharacter* Player, FName ItemID, FString BlockName);

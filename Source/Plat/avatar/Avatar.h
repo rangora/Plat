@@ -49,7 +49,8 @@ public:
 	void CollectAutoPickups();
 
 	/* Block Interaction */
-	FVector GetBlockLocation(FVector HitLocation);
+	bool DeployBlock(FName ItemID, FString BlockName);
+	//FVector GetBlockLocation(FVector HitLocation);
 
 
 protected:
@@ -72,9 +73,10 @@ private:
 	void EndHit();
 
 	/* Block Interaction */
+	void GiveBlockData(AActor* HitBlock);
+	FVector GetBlockLocation(FVector HitLocation);
 	AActor* GetForwardBlock(FVector* HitLocation = nullptr);
-	//FVector GetBlockLocation(FVector HitLocation);
-	bool DestroyHitBlock(AActor* HitActor, FVector& BlockLocation);
+	bool DestroyHitBlock(AActor* HitActor);
 
 	/* Attack animation. not interaction. */
 	void AttackAnim();
@@ -93,9 +95,13 @@ private:
 	FTimerHandle BreakBlockTimer;
 	FTimerHandle AttackAnimTimer;
 
-	/* It point block if hit the block on OnHit() function. */
+	/* It point a hit block in OnHit() function. */
 	ABasicBlock* TargetBlock;
 
+	/* Hit location of a block. */
+	FVector HitLocation; 
+
+	/* View type. */
 	ViewState CurrentView;
 
 	/* PlayerCharacter parameters. */

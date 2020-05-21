@@ -95,7 +95,7 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 	FString Input = Key.ToString();
 	FString ItemName;
 	AAvatar* IPlayer = Cast<AAvatar>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	int inputIndex;
+	int inputIndex = -1;
 
 	if (Input.Equals("One")) {
 		ItemName = ScreenUIWidget->QuickSlots[0]->LinkedSlot->ItemName;

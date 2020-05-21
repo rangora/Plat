@@ -9,7 +9,7 @@ AAvatar::AAvatar() {
 	isAttacking = false;
 	AttackRange = 200.;
 	AttackRadius = 50.;
-	attackPower = 10.;
+	attackPower = 20.;
 	healthValue = 1.0;
 
 	// Create SpringArmComponent
@@ -90,16 +90,43 @@ void AAvatar::Turn(float newAxisValue) {
 }
 
 void AAvatar::AttackTarget() {
-	FVector HitLocation;
-	AActor* HitActor = GetForwardBlock(&HitLocation);
+	if (IsValid(TargetBlock)) {
+		TargetBlock->currentHP -= attackPower;
+		TargetBlock->Breaking();
 
-	// Validation check.
-	if (IsValid(HitActor)) {
-		// Get location of a hit block.	
-		FVector BlockLocation = GetBlockLocation(HitLocation);
+		if (TargetBlock->currentHP <= 0) {
 
-		// Destroy the block.
-		if (DestroyHitBlock(HitActor, BlockLocation)) {};
+			// Destroy the block.
+			if (DestroyHitBlock(TargetBlock)) {
+				EndHit();
+			};
+		}
+	}
+}
+
+void AAvatar::GiveBlockData(AActor* HitBlock) {
+	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+	BlockData* TargetBlockData = nullptr;
+
+	TargetBlock = Cast<ABasicBlock>(HitBlock);
+
+	// Get location of a hit block.	
+	TargetBlock->BlockLocation = GetBlockLocation(HitLocation);
+
+	// Decision to type of the type and get the table.
+	TArray<BlockData>* BlockTable = CurrentState->GetBlockTable(TargetBlock->GetItemID());
+
+	// Get target block data from BlockTable using BlockLocation.
+	for (auto iter : *BlockTable) {
+		if (iter.Value.Equals(TargetBlock->BlockLocation.ToString())) {
+			TargetBlockData = &iter;
+			break;
+		}
+	}
+
+	// Set instance index.
+	if (TargetBlockData) {
+		TargetBlock->instanceIndex = TargetBlockData->Key;
 	}
 }
 
@@ -130,27 +157,13 @@ AActor* AAvatar::GetForwardBlock(FVector* HitLocation) {
 	return nullptr;
 }
 
-bool AAvatar::DestroyHitBlock(AActor* HitActor, FVector& BlockLocation) {
+bool AAvatar::DestroyHitBlock(AActor* HitActor) {
 	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
 
-	BlockData* TargetBlockData = nullptr;
-	TArray<BlockData>* BlockTable;
+	TArray<BlockData>* BlockTable = CurrentState->GetBlockTable(TargetBlock->GetItemID());
 
-	TargetBlock = Cast<ABasicBlock>(HitActor);
-
-	// Decision to type of the type and get the table.
-	BlockTable = CurrentState->GetBlockTable(TargetBlock->GetItemID());
-
-	// Get target block data from BlockTable using BlockLocation.
-	for (auto iter : *BlockTable) {
-		if (iter.Value.Equals(BlockLocation.ToString())) {
-			TargetBlockData = &iter;
-			break;
-		}
-	}
-
-	if (TargetBlockData) {
-		int targetIndex = TargetBlockData->Key;
+	int targetIndex = TargetBlock->instanceIndex;
+	if(targetIndex >= 0) {
 		// Remove the block instance.
 		if (TargetBlock->MeshInstances->RemoveInstance(targetIndex)) {
 
@@ -164,12 +177,13 @@ bool AAvatar::DestroyHitBlock(AActor* HitActor, FVector& BlockLocation) {
 				BlockTable->RemoveAt(targetIndex);
 
 			// Spawn pick up item.
-			TargetBlock->DropItem(FVector(BlockLocation.X + 50.f, BlockLocation.Y + 50.f, BlockLocation.Z + 50.f));
+			TargetBlock->DropItem(FVector(TargetBlock->BlockLocation.X + 50.f, 
+				TargetBlock->BlockLocation.Y + 50.f, 
+				TargetBlock->BlockLocation.Z + 50.f));
 
-			//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-			//	FString::Printf(TEXT("After remove... instances:%d table:%d"),
-			//		TargetBlock->MeshInstances->GetNumRenderInstances(),
-			//		BlockTable->Num()));
+			// Reset parameters.
+			TargetBlock->Reset();
+
 			return true;
 		}
 	}
@@ -179,12 +193,23 @@ bool AAvatar::DestroyHitBlock(AActor* HitActor, FVector& BlockLocation) {
 
 void AAvatar::OnHit() {
 	AttackAnim();
-	AttackTarget();
 
-	if (IsValid(TargetBlock) && !TargetBlock->IsPendingKill()) {
-		bIsAtackking = true;
-		GetWorldTimerManager().SetTimer(AttackAnimTimer, this, &AAvatar::AttackAnim, 0.3f, true);
-		GetWorldTimerManager().SetTimer(BreakBlockTimer, this, &AAvatar::AttackTarget, 0.3f, true);
+	AActor* HitBlock = GetForwardBlock(&HitLocation);
+
+	if (IsValid(HitBlock)) {
+
+		// First hit.
+		if (!bIsAtackking) {
+
+			// Give hit block data to correct block.
+			GiveBlockData(HitBlock);
+
+			GetWorldTimerManager().SetTimer(AttackAnimTimer, this, &AAvatar::AttackAnim, 0.3f, true);
+			GetWorldTimerManager().SetTimer(BreakBlockTimer, this, &AAvatar::AttackTarget, 0.3f, true);
+			
+			bIsAtackking = true;	
+		}
+
 	}
 }
 
@@ -194,7 +219,7 @@ void AAvatar::EndHit() {
 
 	bIsAtackking = false;
 	if (IsValid(TargetBlock)) {
-		TargetBlock->Restore();
+		TargetBlock->Reset();
 	}
 }
 
@@ -228,6 +253,85 @@ void AAvatar::CollectAutoPickups() {
 		if (TestPickup && !TestPickup->IsPendingKill())
 			TestPickup->Collect(IController);
 	}
+}
+
+bool AAvatar::DeployBlock(FName ItemID, FString BlockName) {
+	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+
+	FString BP_GrassPath = "/Game/Blueprints/BP_" + BlockName + "." + "BP_" + BlockName + "_C";
+	UClass* BP_Block = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
+
+	TArray<BlockData>* BlockTable = CurrentState->GetBlockTable(ItemID);
+
+	if (!IsValid(BP_Block))
+		return false;
+
+	AActor* HitBlock = GetForwardBlock(&HitLocation);
+
+	if (IsValid(HitBlock)) {
+		FVector TargetLocation;
+		FVector DeployLocation;
+		FVector Diff;
+
+		TargetLocation = GetBlockLocation(HitLocation);
+		DeployLocation = TargetLocation;
+		Diff = TargetLocation - HitLocation;
+
+		if (Diff.X >= 1.f)
+			DeployLocation.X -= 100.f;
+		else if (Diff.X <= -100.f)
+			DeployLocation.X += 100.f;
+
+		if (Diff.Y >= 1.f)
+			DeployLocation.Y -= 100.f;
+		else if (Diff.Y <= -100.f)
+			DeployLocation.Y += 100.f;
+
+		if (Diff.Z >= 1.f)
+			DeployLocation.Z -= 100.f;
+		else if (Diff.Z <= -100.f)
+			DeployLocation.Z += 100.f;
+
+		FVector CharaLocation = GetCapsuleComponent()->GetComponentLocation();
+		CharaLocation.X = FMath::RoundToInt(CharaLocation.X / 100.f) * 100;
+		CharaLocation.Y = FMath::RoundToInt(CharaLocation.Y / 100.f) * 100;
+		CharaLocation.Z = int(CharaLocation.Z) / 100 * 100;
+
+		FVector MiddleLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 100.f);
+		FVector TopLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 200.f);
+
+		// Check collision between player and block will be deployed.
+		if (CharaLocation.Equals(DeployLocation) ||
+			MiddleLocation.Equals(DeployLocation) ||
+			TopLocation.Equals(DeployLocation)) {
+			return false;
+		}
+
+		// Build the block.
+		else {
+			auto BlockTransform = FTransform(DeployLocation);
+			FString StrTransform = DeployLocation.ToString();
+
+			// Find block actor.
+			auto tempActor = CurrentState->GetMetaBlock(ItemID);
+			auto UsingBlock = Cast<ABasicBlock>(tempActor);
+
+			// Validation check of UsingBlock.
+			if (UsingBlock) {
+				UsingBlock->CreateInstance(BlockTransform);
+				int index = UsingBlock->MeshInstances->GetNumRenderInstances() - 1;
+
+				auto BlockData{ TPair<int, FString>(index, StrTransform) };
+				BlockTable->Add(BlockData);
+
+				return true;
+			}
+
+			// Can't found the correct block name.
+			return false;
+		}
+	}
+	return false;
 }
 
 FVector AAvatar::GetBlockLocation(FVector HitLocation) {
