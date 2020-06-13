@@ -14,11 +14,13 @@ ABasicBlock::ABasicBlock() {
 	RootComponent = Cast<USceneComponent>(MeshInstances);
 
 	MeshInstances->SetCollisionProfileName(TEXT("Block"));
+	MeshInstances->SetMobility(EComponentMobility::Movable);
+	MeshInstances->SetCullDistance(7500.f);
 
 	ItemID = FName("NO_ID");
 	Match = EMatch::NONE;
 	maxHP = 100.f;
-	currentHP = 100.f;
+	currentHP = maxHP;
 }
 
 void ABasicBlock::DropItem(FVector DropLocation) {
@@ -29,7 +31,6 @@ void ABasicBlock::DropItem(FVector DropLocation) {
 		UClass* BP_Item = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_ItemPath));
 
 		if (IsValid(BP_Item)) {
-			//FVector DropLocation = GetActorLocation();
 			GetWorld()->SpawnActor<AAutoPickup>(BP_Item,
 				DropLocation, FRotator::ZeroRotator);
 		}
@@ -56,9 +57,9 @@ void ABasicBlock::Breaking() {
 
 	FVector loc = FVector{ BlockLocation.X + 50.f, BlockLocation.Y + 50.f, BlockLocation.Z + 50.f };
 
-	if(!IsValid(CrackingEffect))
+	if (!IsValid(CrackingEffect))
 		CrackingEffect = GetWorld()->SpawnActor<ACrackingMesh>(ACrackingMesh::StaticClass(), loc, FRotator::ZeroRotator);
-	
+
 	auto Cracking = CrackingEffect->Crack->CreateDynamicMaterialInstance(0);
 
 	if (Cracking != nullptr) {

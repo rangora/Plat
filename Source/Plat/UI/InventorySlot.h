@@ -34,13 +34,19 @@ public:
 	FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	FReply NativeOnMouseButtonUp(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
+	/* Slot interaction. */
+	bool NormalSlotSwap(int leftIndex, int rightIndex);
+	void UpdateRecipeSlots();
+
+	/* Recipe slot relation. */
+	void DragOutFromOutputSlot();
+
 public:
+	class UPlayerInventory* PlayerInventory;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		int Index;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UInventorySlot* DragImageWidget;
-
-private:
-	enum { QuickStart = 12, QuickEnd = 15 };
 };

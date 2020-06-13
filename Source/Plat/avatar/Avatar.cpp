@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Avatar.h"
+#include "WorldCreater.h"
+#include "Partial.h"
 #include "item/CEquipmentData.h"
 #include "DrawDebugHelpers.h"
 
@@ -9,7 +11,7 @@ AAvatar::AAvatar() {
 	isAttacking = false;
 	AttackRange = 200.;
 	AttackRadius = 50.;
-	attackPower = 20.;
+	attackPower = BASEATTACKPOWER;
 	healthValue = 1.0;
 
 	// Create SpringArmComponent
@@ -54,6 +56,16 @@ AAvatar::AAvatar() {
 	CollectionSphere->SetupAttachment(RootComponent);
 	CollectionSphere->SetSphereRadius(350.f);
 
+	// Map trigger
+	CreateUndergroundSphere = CreateDefaultSubobject<USphereComponent>(TEXT("LoadUndergroundSphere"));
+	CreateUndergroundSphere->SetupAttachment(RootComponent);
+	CreateUndergroundSphere->SetSphereRadius(1500.f);
+
+	CreateMapSphere = CreateDefaultSubobject<USphereComponent>(TEXT("LoadMapSphere"));
+	CreateMapSphere->SetupAttachment(RootComponent);
+	CreateMapSphere->SetRelativeLocation(FVector{0.f, 0.f, 5000.f});
+	CreateMapSphere->SetSphereRadius(3500.f);
+
 	// jump
 	GetCharacterMovement()->JumpZVelocity = 600.0f;
 
@@ -89,53 +101,102 @@ void AAvatar::Turn(float newAxisValue) {
 	AddControllerYawInput(newAxisValue);
 }
 
+void AAvatar::NoCollision() {
+	auto direction = CameraComponent->GetForwardVector();
+
+	GetCharacterMovement()->SetMovementMode(MOVE_Flying);
+	GetMesh()->SetCollisionProfileName("NoCollision");
+}
+
 void AAvatar::AttackTarget() {
-	if (IsValid(TargetBlock)) {
-		TargetBlock->currentHP -= attackPower;
-		TargetBlock->Breaking();
+	if (TargetBlock != nullptr) {
+		float amountPower{};
+
+		amountPower = GetAttackDamage();
+
+		TargetBlock->currentHP -= amountPower;
 
 		if (TargetBlock->currentHP <= 0) {
-
 			// Destroy the block.
-			if (DestroyHitBlock(TargetBlock)) {
+			if (DestroyTargetBlock()) {
 				EndHit();
 			};
 		}
+		else {
+			TargetBlock->Breaking();
+		}
+		
+	}
+	else {
+		EndHit();
 	}
 }
 
-void AAvatar::GiveBlockData(AActor* HitBlock) {
+float AAvatar::GetAttackDamage() {
+	float total{};
+
+	if (Weapon != nullptr) {
+		if (Weapon->Match == TargetBlock->Match) {
+			total += Weapon->adDamage;
+		}
+		else {
+			total += Weapon->damage;
+		}
+	}
+	else {
+		total = BASEATTACKPOWER;
+	}
+
+	return total;
+}
+
+void AAvatar::SetTargetBlock(AActor* HitBlock, FVector BlockVector) {
 	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+	auto TempBlock = Cast<ABasicBlock>(HitBlock);
 	BlockData* TargetBlockData = nullptr;
 
-	TargetBlock = Cast<ABasicBlock>(HitBlock);
+	int mapIndex = CurrentState->WorldCreater->GetMapIndex(BlockVector);
 
-	// Get location of a hit block.	
-	TargetBlock->BlockLocation = GetBlockLocation(HitLocation);
+	if (mapIndex < 0)
+		return;
 
-	// Decision to type of the type and get the table.
-	TArray<BlockData>* BlockTable = CurrentState->GetBlockTable(TargetBlock->GetItemID());
+	CurrentPartial = CurrentState->WorldCreater->GetAPartialCurrentMap(BlockVector, mapIndex);
 
-	// Get target block data from BlockTable using BlockLocation.
-	for (auto iter : *BlockTable) {
-		if (iter.Value.Equals(TargetBlock->BlockLocation.ToString())) {
-			TargetBlockData = &iter;
-			break;
+	if (CurrentPartial != nullptr) {
+
+		TargetBlock = CurrentPartial->GetBlock(TempBlock->ItemID);
+		CurrentTable = CurrentPartial->GetBlockTable(TempBlock->ItemID);
+
+		if (TargetBlock != nullptr && IsValid(TargetBlock)) {
+
+			if (CurrentTable != nullptr) {
+
+				for (auto iter : *CurrentTable) {
+					if (iter.Value.Equals(BlockVector.ToString())) {
+						TargetBlockData = &iter;
+						break;
+					}
+
+				}
+
+				if (TargetBlockData != nullptr) {
+					TargetBlock->BlockLocation = BlockVector;
+					TargetBlock->instanceIndex = TargetBlockData->Key; // 위험.
+				}
+			}
 		}
 	}
 
-	// Set instance index.
-	if (TargetBlockData) {
-		TargetBlock->instanceIndex = TargetBlockData->Key;
-	}
+	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+	//	FString::Printf(TEXT("BlockVector:%s"), *BlockVector.ToString()));
 }
 
 AActor* AAvatar::GetForwardBlock(FVector* HitLocation) {
 	FVector Start = CameraComponent->GetComponentLocation();
 	FVector End = (CameraComponent->GetForwardVector() * AttackRange) + Start;
-	
+
 	FHitResult HitResult;
-	
+
 	FCollisionQueryParams Params(NAME_None, false, this);
 	bool bResult = GetWorld()->SweepSingleByChannel(
 		HitResult,
@@ -146,7 +207,7 @@ AActor* AAvatar::GetForwardBlock(FVector* HitLocation) {
 		FCollisionShape::MakeSphere(1.f),
 		Params);
 
-	DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 3.0f);
+	//DrawDebugLine(GetWorld(), Start, End, FColor::Red, false, 3.0f);
 
 	if (bResult) {
 		if (HitLocation) {
@@ -157,28 +218,27 @@ AActor* AAvatar::GetForwardBlock(FVector* HitLocation) {
 	return nullptr;
 }
 
-bool AAvatar::DestroyHitBlock(AActor* HitActor) {
-	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
-
-	TArray<BlockData>* BlockTable = CurrentState->GetBlockTable(TargetBlock->GetItemID());
-
+bool AAvatar::DestroyTargetBlock() {
 	int targetIndex = TargetBlock->instanceIndex;
-	if(targetIndex >= 0) {
+	
+	if (targetIndex >= 0) {
 		// Remove the block instance.
 		if (TargetBlock->MeshInstances->RemoveInstance(targetIndex)) {
-
 			// Remove the block data from BlockTable and refresh the key values.
-			for (int i = targetIndex + 1; i < BlockTable->Num(); i++) {
-				if (BlockTable->IsValidIndex(i))
-					(*BlockTable)[i].Key -= 1;
+			for (int i = targetIndex + 1; i < CurrentTable->Num(); i++) {
+				if (CurrentTable->IsValidIndex(i)) 
+					(*CurrentTable)[i].Key -= 1;
 			}
 
-			if (BlockTable->IsValidIndex(targetIndex))
-				BlockTable->RemoveAt(targetIndex);
+			if (CurrentTable->IsValidIndex(targetIndex))
+				CurrentTable->RemoveAt(targetIndex);
+			
+			auto CurrentCount = CurrentPartial->GetBlockCount(TargetBlock->ItemID);
+			(*CurrentCount)--;
 
 			// Spawn pick up item.
-			TargetBlock->DropItem(FVector(TargetBlock->BlockLocation.X + 50.f, 
-				TargetBlock->BlockLocation.Y + 50.f, 
+			TargetBlock->DropItem(FVector(TargetBlock->BlockLocation.X + 50.f,
+				TargetBlock->BlockLocation.Y + 50.f,
 				TargetBlock->BlockLocation.Z + 50.f));
 
 			// Reset parameters.
@@ -191,25 +251,46 @@ bool AAvatar::DestroyHitBlock(AActor* HitActor) {
 	return false;
 }
 
+bool AAvatar::IsVectorOverlapped(FVector DeployVector) {
+	FVector CharaLocation = GetCapsuleComponent()->GetComponentLocation();
+	CharaLocation.X = FMath::RoundToInt(CharaLocation.X / 100.f) * 100;
+	CharaLocation.Y = FMath::RoundToInt(CharaLocation.Y / 100.f) * 100;
+	CharaLocation.Z = int(CharaLocation.Z) / 100 * 100;
+	
+	FVector MiddleLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 100.f);
+	FVector TopLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 200.f);
+
+	// Check collision between player and block will be deployed.
+	if (CharaLocation.Equals(DeployVector) ||
+		MiddleLocation.Equals(DeployVector) ||
+		TopLocation.Equals(DeployVector)) {
+		return true;
+	}
+
+	return false;
+}
+
 void AAvatar::OnHit() {
+	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+	
+	ResetTargetBlock();
+
 	AttackAnim();
 
 	AActor* HitBlock = GetForwardBlock(&HitLocation);
+	
+	
+	if (HitBlock != nullptr) {
+		FVector BlockVector =  GetBlockLocation(HitLocation);
 
-	if (IsValid(HitBlock)) {
+		SetTargetBlock(HitBlock, BlockVector);
+		
 
-		// First hit.
-		if (!bIsAtackking) {
 
-			// Give hit block data to correct block.
-			GiveBlockData(HitBlock);
+		GetWorldTimerManager().SetTimer(AttackAnimTimer, this, &AAvatar::AttackAnim, 0.3f, true);
+		GetWorldTimerManager().SetTimer(BreakBlockTimer, this, &AAvatar::AttackTarget, 0.3f, true);
 
-			GetWorldTimerManager().SetTimer(AttackAnimTimer, this, &AAvatar::AttackAnim, 0.3f, true);
-			GetWorldTimerManager().SetTimer(BreakBlockTimer, this, &AAvatar::AttackTarget, 0.3f, true);
-			
-			bIsAtackking = true;	
-		}
-
+		bIsAtackking = true;
 	}
 }
 
@@ -218,13 +299,80 @@ void AAvatar::EndHit() {
 	GetWorldTimerManager().ClearTimer(BreakBlockTimer);
 
 	bIsAtackking = false;
-	if (IsValid(TargetBlock)) {
+	
+
+	if (TargetBlock != nullptr) {
 		TargetBlock->Reset();
 	}
+
+	ResetTargetBlock();
+}
+
+void AAvatar::ResetTargetBlock() {
+	TargetBlock = nullptr;
+	CurrentPartial = nullptr;
+	CurrentTable = nullptr;
 }
 
 void AAvatar::AttackAnim() {
 	ABAnim->PlayAttackMontage();
+}
+
+void AAvatar::LoadMaps() {
+	FVector PlayerVec = GetActorLocation();
+
+	auto MapNear = GetNearMap();
+	Creater->AutoMapLoader(PlayerVec, MapNear);
+}
+
+void AAvatar::CreateUnderground() {
+	auto UndergroundNear = GetNearUndergroundPartials();
+	Creater->AutoUndergroundCreater(UndergroundNear);
+}
+
+TArray<AWorldMap*> AAvatar::GetNearMap() {
+	TArray<AActor*> CollectActors;
+	TArray<AWorldMap*> Near;
+	AWorldMap* PieceOfMap = nullptr;
+
+	CreateMapSphere->GetOverlappingActors(CollectActors);
+
+	for (auto iter : CollectActors) {
+		PieceOfMap = Cast<AWorldMap>(iter);
+
+		if (IsValid(PieceOfMap) && !PieceOfMap->IsPendingKill()) {
+			Near.Add(PieceOfMap);
+		}
+	}
+
+	return Near;
+}
+
+TArray<APartial*> AAvatar::GetNearUndergroundPartials() {
+	TArray<AActor*> CollectActors;
+	TArray<APartial*> Near;
+	APartial* Piece = nullptr;
+
+
+	CreateUndergroundSphere->GetOverlappingActors(CollectActors);
+
+	for (int32 Collected = 0; Collected < CollectActors.Num(); ++Collected) {
+		Piece = Cast<APartial>(CollectActors[Collected]);
+		
+		if (Piece) {
+			if (Piece->GetActorLocation().Z < 6000.f) {
+				Near.Add(Piece);
+			}
+		}
+	}
+	return Near;
+}
+
+void AAvatar::ShowCurrentVector() {
+	FVector Current = GetActorLocation();
+
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+		FString::Printf(TEXT("Current:%s"), *Current.ToString()));
 }
 
 void AAvatar::UseItem() {
@@ -256,12 +404,8 @@ void AAvatar::CollectAutoPickups() {
 }
 
 bool AAvatar::DeployBlock(FName ItemID, FString BlockName) {
-	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
-
 	FString BP_GrassPath = "/Game/Blueprints/BP_" + BlockName + "." + "BP_" + BlockName + "_C";
 	UClass* BP_Block = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
-
-	TArray<BlockData>* BlockTable = CurrentState->GetBlockTable(ItemID);
 
 	if (!IsValid(BP_Block))
 		return false;
@@ -269,66 +413,42 @@ bool AAvatar::DeployBlock(FName ItemID, FString BlockName) {
 	AActor* HitBlock = GetForwardBlock(&HitLocation);
 
 	if (IsValid(HitBlock)) {
-		FVector TargetLocation;
-		FVector DeployLocation;
-		FVector Diff;
+		FVector DeployLocation = GetDeployLocation(HitLocation);
 
-		TargetLocation = GetBlockLocation(HitLocation);
-		DeployLocation = TargetLocation;
-		Diff = TargetLocation - HitLocation;
-
-		if (Diff.X >= 1.f)
-			DeployLocation.X -= 100.f;
-		else if (Diff.X <= -100.f)
-			DeployLocation.X += 100.f;
-
-		if (Diff.Y >= 1.f)
-			DeployLocation.Y -= 100.f;
-		else if (Diff.Y <= -100.f)
-			DeployLocation.Y += 100.f;
-
-		if (Diff.Z >= 1.f)
-			DeployLocation.Z -= 100.f;
-		else if (Diff.Z <= -100.f)
-			DeployLocation.Z += 100.f;
-
-		FVector CharaLocation = GetCapsuleComponent()->GetComponentLocation();
-		CharaLocation.X = FMath::RoundToInt(CharaLocation.X / 100.f) * 100;
-		CharaLocation.Y = FMath::RoundToInt(CharaLocation.Y / 100.f) * 100;
-		CharaLocation.Z = int(CharaLocation.Z) / 100 * 100;
-
-		FVector MiddleLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 100.f);
-		FVector TopLocation = FVector(CharaLocation.X, CharaLocation.Y, CharaLocation.Z + 200.f);
-
-		// Check collision between player and block will be deployed.
-		if (CharaLocation.Equals(DeployLocation) ||
-			MiddleLocation.Equals(DeployLocation) ||
-			TopLocation.Equals(DeployLocation)) {
+		// Check the deployed vector is overlapped with character.
+		if (IsVectorOverlapped(DeployLocation)) {
 			return false;
 		}
 
 		// Build the block.
 		else {
-			auto BlockTransform = FTransform(DeployLocation);
+			FTransform BlockTransform = FTransform(DeployLocation);
 			FString StrTransform = DeployLocation.ToString();
+			auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+			
+			int mapIndex = CurrentState->WorldCreater->GetMapIndex(DeployLocation);
+			
+			if (mapIndex < 0)
+				return false;
 
-			// Find block actor.
-			auto tempActor = CurrentState->GetMetaBlock(ItemID);
-			auto UsingBlock = Cast<ABasicBlock>(tempActor);
+			CurrentPartial = CurrentState->WorldCreater->GetAPartialCurrentMap(DeployLocation, mapIndex);
+			CurrentTable = CurrentPartial->GetBlockTable(ItemID);
 
-			// Validation check of UsingBlock.
-			if (UsingBlock) {
-				UsingBlock->CreateInstance(BlockTransform);
-				int index = UsingBlock->MeshInstances->GetNumRenderInstances() - 1;
+			auto tt=CurrentPartial->GetActorLocation();
 
-				auto BlockData{ TPair<int, FString>(index, StrTransform) };
-				BlockTable->Add(BlockData);
+			if (CurrentPartial != nullptr && CurrentTable != nullptr) {
+				auto UsingBlock = CurrentPartial->GetBlock(ItemID);
 
-				return true;
+				if (UsingBlock) {
+					UsingBlock->CreateInstance(BlockTransform);
+					int index = UsingBlock->MeshInstances->GetNumRenderInstances() - 1;
+
+					auto BlockData{ TPair<int, FString>(index, StrTransform) };
+					CurrentTable->Add(BlockData);
+					ResetTargetBlock();
+					return true;
+				}
 			}
-
-			// Can't found the correct block name.
-			return false;
 		}
 	}
 	return false;
@@ -352,8 +472,33 @@ FVector AAvatar::GetBlockLocation(FVector HitLocation) {
 	else
 		BlockLocation.Z = FMath::FloorToFloat((HitLocation.Z - 2.f) / 100.f) * 100.f;
 
+	//GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+	//	FString::Printf(TEXT("BlockLocation:%s"), *BlockLocation.ToString()));
 
 	return BlockLocation;
+}
+
+FVector AAvatar::GetDeployLocation(FVector HitVector) {
+	FVector TargetBlockVector = GetBlockLocation(HitVector);
+	FVector DeployVector = TargetBlockVector;
+	FVector Diff = TargetBlockVector - HitVector;
+
+	if (Diff.X >= 1.f)
+		DeployVector.X -= 100.f;
+	else if (Diff.X <= -100.f)
+		DeployVector.X += 100.f;
+
+	if (Diff.Y >= 1.f)
+		DeployVector.Y -= 100.f;
+	else if (Diff.Y <= -100.f)
+		DeployVector.Y += 100.f;
+
+	if (Diff.Z >= 1.f)
+		DeployVector.Z -= 100.f;
+	else if (Diff.Z <= -100.f)
+		DeployVector.Z += 100.f;
+
+	return DeployVector;
 }
 
 void AAvatar::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted) {
@@ -393,14 +538,21 @@ void AAvatar::DisarmWeapon() {
 
 void AAvatar::BeginPlay() {
 	Super::BeginPlay();
+
+	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+	Creater = CurrentState->GetWorldCreater();
+
+	GetWorldTimerManager().SetTimer(MapLoadTimer, this, &AAvatar::LoadMaps, 1.0f, true, 1.0f);
+	GetWorldTimerManager().SetTimer(UndergroundCreateTimer, this, &AAvatar::CreateUnderground, 0.8f, true, 0.2f);
 }
 
 void AAvatar::ViewChange() {
 	switch (CurrentView) {
+	
 		// FirstView -> ThirdView(Start view)
 	case ViewState::FIRSTPERSON: {
-		SpringArm->TargetArmLength = 400.0f;
-		SpringArm->SetRelativeLocation(FVector::ZeroVector);	
+		SpringArm->TargetArmLength = 900.0f;
+		SpringArm->SetRelativeLocation(FVector::ZeroVector);
 		AttackRange += SpringArm->TargetArmLength;
 
 		GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -409,19 +561,18 @@ void AAvatar::ViewChange() {
 		// Shadow on.
 		GetMesh()->bCastDynamicShadow = true;
 		GetMesh()->CastShadow = true;
-		
+
 		CurrentView = ViewState::THIRDPERSON;
 		break;
 	}
 	// ThriedView -> FirstView
-	case ViewState::THIRDPERSON: {	
+	case ViewState::THIRDPERSON: {
 		SpringArm->TargetArmLength = 0.f;
 		SpringArm->SetRelativeLocation(FVector(15.f, 0.f, 72.f));
-		AttackRange -= SpringArm->TargetArmLength;	
+		AttackRange -= SpringArm->TargetArmLength;
 
 		GetCharacterMovement()->bOrientRotationToMovement = false;		// 방향키 방향으로 캐릭터가 회전함.
 		GetCharacterMovement()->bUseControllerDesiredRotation = true;	// 마우스 방향으로 캐릭터도 회전함.
-		
 
 		// Shadow off.
 		GetMesh()->bCastDynamicShadow = false;
@@ -450,6 +601,7 @@ void AAvatar::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
 	CollectAutoPickups();
+	//CreateMaps();
 }
 
 void AAvatar::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
@@ -458,8 +610,9 @@ void AAvatar::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
 	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &AAvatar::Jump);
 	PlayerInputComponent->BindAction(TEXT("UseItem"), EInputEvent::IE_Pressed, this, &AAvatar::UseItem);
 	PlayerInputComponent->BindAction(TEXT("ViewChange"), EInputEvent::IE_Pressed, this, &AAvatar::ViewChange);
+	PlayerInputComponent->BindAction(TEXT("NoCollision"), EInputEvent::IE_Pressed, this, &AAvatar::NoCollision);
+	PlayerInputComponent->BindAction(TEXT("ShowVec"), EInputEvent::IE_Pressed, this, &AAvatar::ShowCurrentVector);
 
-	//PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AAvatar::Attack);
 	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AAvatar::OnHit);
 	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Released, this, &AAvatar::EndHit);
 

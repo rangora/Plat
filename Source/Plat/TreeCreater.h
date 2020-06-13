@@ -8,8 +8,8 @@
 UCLASS()
 class PLAT_API ATreeCreater : public AActor {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	ATreeCreater();
 
 	virtual void BeginPlay() override;

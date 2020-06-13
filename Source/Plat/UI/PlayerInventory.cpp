@@ -1,12 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PlayerInventory.h"
+#include "item/CRecipeData.h"
 #include "system/AvatarController.h"
 #include "system/SandBoxState.h"
 
 UPlayerInventory::UPlayerInventory(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer) {
 	SlotSize = InventorySlotSize;
+
+	RecipeSlotIDs.Init("None", 9);
 
 	static ConstructorHelpers::FClassFinder<UInventorySlot> UI_SLOT_C(
 		TEXT("/Game/UMG/BP_InventorySlot.BP_InventorySlot_C"));
@@ -83,6 +86,40 @@ bool UPlayerInventory::SwapSlot(int leftIndex, int rightIndex) {
 	Slots[rightIndex]->Refresh();
 
 	return true;
+}
+
+void UPlayerInventory::AssembleRecipe() {
+	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
+	FString StringFlags = "0b";
+	FString PlayerIngradients;
+	FName ResultID = "None";
+
+	// preprocess data.
+	for (auto iter : RecipeSlotFlags) {
+		StringFlags += FString::FromInt(iter);
+	}
+
+	for (int i = 0; i < RecipeSlotIDs.Num(); i++) {
+		if (RecipeSlotIDs[i].IsEqual("None"))
+			continue;
+
+		PlayerIngradients += RecipeSlotIDs[i].ToString();
+		PlayerIngradients.Append(",");
+	}
+	PlayerIngradients.RemoveAt(PlayerIngradients.Len() - 1);
+
+	// Get item list matched with slot flags.
+	auto Nominated = CurrentState->GetItemRecipes(StringFlags);
+
+	// Find a correct item in the list.
+	for (auto iter : Nominated) {
+		FString Ingradients = iter->ItemIDs;
+
+		if (Ingradients.Equals(PlayerIngradients))
+			ResultID = iter->OutputItem;
+	}
+
+	Slots[Output]->SetNewItem(ResultID);
 }
 
 int UPlayerInventory::FindEmptySlot() {

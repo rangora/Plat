@@ -9,10 +9,9 @@
 UCLASS()
 class PLAT_API ACrackingMesh : public AActor {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	ACrackingMesh();
 
 	UStaticMeshComponent* Crack;
-
 };

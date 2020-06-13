@@ -5,201 +5,206 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Math/TransformNonVectorized.h"
 #include "system/SandBoxState.h"
-#include <iostream>
-#include <algorithm>
-#include <random>
 
-float AWorldCreater::fade(float t) {
-	return t * t * t * (t * (t * 6 - 15) + 10);
-}
-
-float AWorldCreater::lerp(float t, float a, float b) {
-	return a + t * (b - a); // t = amount
-}
-
-float AWorldCreater::grad(int hash, float x, float y, float z) {
-	int h = hash & 15;
-	int u = h < 8 ? x : y;
-	int v = h < 4 ? y : h == 12 || h == 14 ? x : z;
-	return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
-}
-
-float AWorldCreater::noise(float x, float y) {
-	int hash{};
-	int X = (int)floor(x) & 255;
-	int Y = (int)floor(y) & 255;
-
-	x -= floor(x);
-	y -= floor(y);
-
-	// easy curve..
-	double u = fade(x);
-	double v = fade(y);
-
-	int A = _param[X] + Y;
-	int B = _param[X + 1] + Y;
-
-#define xFlags 0x46552222
-#define yFlags 0x2222550A
-
-	hash = (_param[_param[A]] & 0xF) << 1;
-	// Grad(p[p[A]], x, y)
-	double g22 = (((xFlags >> hash) & 3) - 1) * x + (((yFlags >> hash) & 3) - 1) * y;
-	hash = (_param[_param[B]] & 0xF) << 1;
-	// Grad(p[p[A]], x - 1, y)
-	double g12 = (((xFlags >> hash) & 3) - 1) * (x - 1) + (((yFlags >> hash) & 3) - 1) * y;
-	double c1 = g22 + u * (g12 - g22); // Interpolation X.
-
-	hash = (_param[_param[A + 1]] & 0xF) << 1;
-	// Grad(p[p[A + 1], x, y - 1)
-	double g21 = (((xFlags >> hash) & 3) - 1) * x + (((yFlags >> hash) & 3) - 1) * (y - 1);
-	hash = (_param[_param[B + 1]] & 0xF) << 1;
-	// Grad(p[p[A + 1], x - 1, y - 1)
-	double g11 = (((xFlags >> hash) & 3) - 1) * (x - 1) + (((yFlags >> hash) & 3) - 1) * (y - 1);
-	double c2 = g21 + u * (g11 - g21); // Interpolation X.
-
-	// Return Y interpolation value.
-	return c1 + v * (c2 - c1);
-}
-
-float AWorldCreater::octave(int x, int y) {
-	float amplitude = 1, freq = 1;
-	float sum{};
-
-	for (int i = 0; i < 8; i++) {
-		sum += noise(x * freq, y * freq) * amplitude;
-		amplitude *= 2.0f;
-		freq *= 0.5f;
+void AWorldCreater::Init() {
+	// Init TileMap.
+	for (int i = 0; i < MAXSIZE; i++) {
+		for (int j = 0; j < MAXSIZE; j++) {
+			TileMap[i][j] = TileState::EMPTYFILE;
+		}
 	}
-	return sum;
+
+	FVector StartMapVector{ 50000.f, 50000.f, 0.f };
+	SpawnAndSetMap(StartMapVector, TileState::MAPCREATE);
+
+	float dx[4]{ 10000.f, 0.f, -10000.f, 0.f };
+	float dy[4]{ 0.f, 10000.f, 0.f, -10000.f };
+
+	for (int i = 0; i < 4; i++) {
+		FVector CollisionVector{ StartMapVector.X + dx[i], StartMapVector.Y + dy[i], 0.f };
+
+		SpawnAndSetMap(CollisionVector, TileState::COLIISION);
+
+	}
+	
 }
 
-void AWorldCreater::CreateTerrain() {
-	FString BP_DirtPath = "/Game/Blueprints/BP_Dirt.BP_Dirt_C";
-	FString BP_GrassPath = "/Game/Blueprints/BP_Grass.BP_Grass_C";
-	FString BP_RockPath = "/Game/Blueprints/BP_Rock.BP_Rock_C";
+void AWorldCreater::AutoMapLoader(FVector PlayerVec, TArray<AWorldMap*> NearMaps) {
+	if (bLock == false) {
+		bLock = true;
 
-	UClass* BP_Dirt = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_DirtPath));
-	UClass* BP_Grass = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
-	UClass* BP_Rock = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_RockPath));
+		for (auto Map : NearMaps) {
+			auto CurrentMap = GetMap(PlayerVec);
+			auto CurrentMapVector = CurrentMap->MapLocation;
+			auto MapVector = Map->MapLocation;
 
-	TArray<BlockData>* BlockTable;
+			if (CurrentMap != nullptr) {
 
-	Dirt = GetWorld()->SpawnActor<ABasicBlock>(BP_Dirt, FVector::ZeroVector, FRotator::ZeroRotator);
-	Grass = GetWorld()->SpawnActor<ABasicBlock>(BP_Grass, FVector::ZeroVector, FRotator::ZeroRotator);
-	Rock = GetWorld()->SpawnActor<ABasicBlock>(BP_Rock, FVector::ZeroVector, FRotator::ZeroRotator);
 
-	auto CurrentState = Cast<ASandBoxState>(GetWorld()->GetGameState());
-	float threshold = 20.0f;
-	float noiseScale = 20.f; // grid를 정의. 높을수록 단순해짐.
-	float amp = 16.f;
-	int preZ{};
-	int currentZ;
-	size_t* blockCount{};
+				ExpandNewMap(MapVector);
 
-	std::random_device seed;
-	std::default_random_engine eng(seed());
-	std::bernoulli_distribution middle(0.6);
-	std::bernoulli_distribution top(0.8); // 다 else로 빠지는데?
-	
-	for (int x = 0; x < X; x++) {
-		for (int y = 0; y < Y; y++) {
-			for (int z = Z - 1; z >= 0; z--) {
-				float xnoise = noise(z / noiseScale, y / noiseScale) * amp;
-				float ynoise = noise(x / noiseScale, y / noiseScale) * amp;
-				float znoise = noise(x / noiseScale, z / noiseScale) * amp;
+				// Create terrain	
+				Map->RemoveCollisionMesh();
 
-				float density = xnoise + ynoise + znoise + z;
+				auto aTask = new MapCreateTask(Map);
+				aTask->DoWorkMain();
 
-				if (density < threshold && density > 15.f) {
-					currentZ = z * 100;
-									
-					// Dicision Block.
-					if (preZ - currentZ != 100) {
-						DeployedBlock = Grass;
-						blockCount = &GrassCount;
-						BlockTable = &CurrentState->GrassTable;
-					}
-					else {
-						DeployedBlock = Dirt;
-						blockCount = &DirtCount;
-						BlockTable = &CurrentState->DirtTable;
-					}
-
-					FVector Local{ x * 100.f, y * 100.f, z * 100.f };
-					FString StrTransform = Local.ToString();
-					auto BlockTransform = FTransform(Local);
-
-					DeployedBlock->CreateInstance(BlockTransform);
-					
-					auto NewBlockData{ BlockData(*blockCount, StrTransform) };
-					BlockTable->Add(NewBlockData);
-					(*blockCount)++;
-			
-					preZ = currentZ;
-				}
+				Maps.Add(Map);
+				delete aTask;
 			}
 		}
-		preZ = 0;
-		currentZ = 0;
+
+			for (auto ValidMap : Maps) {
+				float threshold = 22000.f;
+				FVector ValidMapVector = ValidMap->MapLocation;
+			
+				float MapDistance = GetDistance(ValidMapVector, PlayerVec);
+
+
+				if (FMath::Abs(MapDistance) >= threshold) {
+					Maps.Remove(ValidMap);
+					ValidMap->Destroy();
+					SpawnAndSetMap(ValidMapVector, TileState::COLIISION);
+					FPlatformProcess::Sleep(0.01f);
+
+					GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+						FString::Printf(TEXT("Map Delete..")));
+				}
+			}
+		
+		bLock = false;
+	}
+}
+
+void AWorldCreater::AutoUndergroundCreater(TArray<APartial*> Partials) {
+
+	if (bLock == false) {
+		for (auto Partial : Partials) {
+			int mapIndex = GetMapIndex(Partial->GetActorLocation());
+
+			Maps[mapIndex]->CreateUnderground(Partial);
+		}
+	}
+}
+
+void AWorldCreater::ExpandNewMap(FVector MapVector) {
+	auto MapXY = GetTileXY(MapVector);
+	int dx[4]{ 0,0,-1,1 };
+	int dy[4]{ 1,-1,0,0 };
+
+	for (int i = 0; i < 4; i++) {
+		TileXY DirectionXY{MapXY.first + dx[i], MapXY.second + dy[i]};
+
+		if (TileMap[DirectionXY.first][DirectionXY.second] == TileState::EMPTYFILE) {
+			FVector TargetVector{ DirectionXY.first * 10000.f, DirectionXY.second * 10000.f, 0.f };
+
+			SpawnAndSetMap(TargetVector, TileState::COLIISION);
+		}
+	}
+}
+
+AWorldMap* AWorldCreater::GetMap(FVector Vec) {
+	FVector Input = { FMath::FloorToFloat((Vec.X / mapSize)) * mapSize,
+					  FMath::FloorToFloat((Vec.Y / mapSize))* mapSize,
+					  0.f };
+
+
+	for (auto iter : Maps) {
+		if (iter->MapLocation.Equals(Input)) {
+			return iter;
+		}
+	}
+	return nullptr;
+}
+
+int AWorldCreater::GetMapIndex(FVector Vec) {
+	int index = -1;
+	FVector Input = { FMath::FloorToFloat((Vec.X / mapSize)) * mapSize,
+					  FMath::FloorToFloat((Vec.Y / mapSize)) * mapSize,
+					  FMath::FloorToFloat((Vec.Z / mapSize)) * mapSize };
+
+	for (int i = 0; i < Maps.Num(); i++) {
+		if (Maps[i]->MapLocation.Equals(Input)) {
+			index = i;
+			break;
+		}
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
-		FString::Printf(TEXT("[Dirt] instances:%d table:%d"),
-			Dirt->MeshInstances->GetNumRenderInstances(),
-			CurrentState->DirtTable.Num()));
-
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
-		FString::Printf(TEXT("[Grass] instances:%d table:%d"),
-			Grass->MeshInstances->GetNumRenderInstances(),
-			CurrentState->GrassTable.Num()));
+	return index;
 }
 
-void AWorldCreater::CreateTreeMap() {
+TileXY AWorldCreater::GetTileXY(FVector Vec) {
+	int _x = FMath::FloorToFloat((Vec.X / mapSize));
+	int _y = FMath::FloorToFloat((Vec.Y / mapSize));
+
+	TileXY NewTileXY{ _x, _y };
+
+	return NewTileXY;
 }
 
-void AWorldCreater::CreateTree(FVector position, int height) {
-	auto Tree = ATreeCreater::StaticClass();
+void AWorldCreater::SetMapFileState(TileXY pTileXY, TileState State) {
+	if (pTileXY.first < 0 || pTileXY.second < 0)
+		return;
 
-	GetWorld()->SpawnActor<ATreeCreater>(Tree,
-		position + FVector(0.f, 0.f, 100.f * height), FRotator::ZeroRotator);
+	TileMap[pTileXY.first][pTileXY.second] = State;
+}
+
+APartial* AWorldCreater::GetAPartialCurrentMap(FVector Vec, int mapIndex) {
+	auto Partial = Maps[mapIndex]->GetPartial(Vec);
+
+	if (Partial != nullptr)
+		return Partial;
+
+	return nullptr;
+}
+
+void AWorldCreater::SpawnAndSetMap(FVector Location, TileState State) {
+	AWorldMap* NewMap = nullptr;
+
+	switch (State) {
+		case TileState::MAPCREATE:
+			NewMap = GetWorld()->SpawnActor<AWorldMap>(AWorldMap::StaticClass(), Location, FRotator::ZeroRotator);
+			NewMap->RemoveCollisionMesh();
+			NewMap->Init(_param, Location);
+			NewMap->CreateTerrain();
+			Maps.Add(NewMap);
+			
+			break;
+
+		case TileState::COLIISION:
+			NewMap = GetWorld()->SpawnActor<AWorldMap>(AWorldMap::StaticClass(), Location, FRotator::ZeroRotator);
+			NewMap->Init(_param, Location);
+
+			break;
+
+		default:
+			break;
+	}
+	
+	auto NewTileXY = GetTileXY(Location);
+	SetMapFileState(NewTileXY, State);
+}
+
+float AWorldCreater::GetDistance(FVector LeftVec, FVector RightVec) {
+	return FMath::Sqrt(FMath::Pow((RightVec.X - LeftVec.X), 2) + FMath::Pow((RightVec.Y - LeftVec.Y), 2));
 }
 
 AWorldCreater::AWorldCreater() {
-	PrimaryActorTick.bCanEverTick = false;
-	
-	DirtCount = 0;
-	GrassCount = 0;
-	RockCount = 0;
-	LeafCount = 0;
-	TreeCount = 0;
+	UE_LOG(Plat, Log, TEXT("WorldCreater Constructor"));
 
-	treeMap = new int[X * Y];
+	PrimaryActorTick.bCanEverTick = false;
+	mapLoadThreshold = 7000.f;
+	mapSize = 10000.f;
 
 	// Set random value.
 	for (int i = 0; i < 512; i++) {
 		_param[i] = FMath::RandRange(1, 255);
 	}
-
-}
-
-void AWorldCreater::CreateHeight(FVector position, int height) {
-	FString BP_DirtPath = "/Game/Blueprints/BP_Dirt.BP_Dirt_C";
-	FString BP_GrassPath = "/Game/Blueprints/BP_Grass.BP_Grass_C";
-
-	UClass* BP_Dirt = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_DirtPath));
-	UClass* BP_Grass = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *BP_GrassPath));
-
-
-	GetWorld()->SpawnActor<ABasicBlock>(BP_Grass,
-		position + FVector(0.f, 0.f, 100.f * (height - 1)), FRotator::ZeroRotator);
-
-	GetWorld()->SpawnActor<ABasicBlock>(BP_Dirt,
-		position + FVector(0.f, 0.f, 100.f * (height - 2)), FRotator::ZeroRotator);
+	UE_LOG(Plat, Log, TEXT("WorldCreater Constructor Out"));
 }
 
 void AWorldCreater::BeginPlay() {
 	Super::BeginPlay();
 
-	CreateTerrain();
+	Init();
 }

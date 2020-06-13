@@ -14,6 +14,9 @@
 #include "blocks/BasicBlock.h"
 #include "TimerManager.h"
 #include "UI/ScreenUI.h"
+#include "WorldCreater.h"
+#include "Partial.h"
+#include "WorldMap.h"
 #include "Avatar.generated.h"
 
 UCLASS()
@@ -50,15 +53,13 @@ public:
 
 	/* Block Interaction */
 	bool DeployBlock(FName ItemID, FString BlockName);
-	//FVector GetBlockLocation(FVector HitLocation);
-
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
 	/* Constant for only used in avatar class. */
-	const float BASEATTACKPOWER = 10.f;
+	const float BASEATTACKPOWER = 20.f;
 	enum class ViewState { FIRSTPERSON, THIRDPERSON };
 
 	/* Movement functions. */
@@ -66,24 +67,39 @@ private:
 	void LeftRight(float newAxisValue);
 	void LookUp(float newAxisValue);
 	void Turn(float newAxisValue);
+	void NoCollision();
 
 	/* Attack : Check the validation of target and give damage. */
 	void OnHit();
 	void AttackTarget();
+	float GetAttackDamage();
 	void EndHit();
+	void ResetTargetBlock();
 
-	/* Block Interaction */
-	void GiveBlockData(AActor* HitBlock);
+	/* Block interaction. */
+	void SetTargetBlock(AActor* HitBlock, FVector BlockVector);
 	FVector GetBlockLocation(FVector HitLocation);
+	FVector GetDeployLocation(FVector HitVector);
 	AActor* GetForwardBlock(FVector* HitLocation = nullptr);
-	bool DestroyHitBlock(AActor* HitActor);
+	bool DestroyTargetBlock();
+	bool IsVectorOverlapped(FVector DeployVector);
 
 	/* Attack animation. not interaction. */
 	void AttackAnim();
 
+	/* Map loading wrapper function. */
+	void LoadMaps();
+	void CreateUnderground();
+	TArray<AWorldMap*> GetNearMap();
+	TArray<APartial*> GetNearUndergroundPartials();
+
+	/* Debug */
+	void ShowCurrentVector();
+
 	UFUNCTION()
 		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	
 public:
 	/* Maximum build range for blocks. */
 	const float interactRange = 600.f;
@@ -95,14 +111,23 @@ private:
 	FTimerHandle BreakBlockTimer;
 	FTimerHandle AttackAnimTimer;
 
+	/* Map Loading Timer. */
+	FTimerHandle MapLoadTimer;
+	FTimerHandle UndergroundCreateTimer;
+
 	/* It point a hit block in OnHit() function. */
-	ABasicBlock* TargetBlock;
+	ABasicBlock* TargetBlock = nullptr;
+	APartial* CurrentPartial = nullptr;
+	TArray<BlockData>* CurrentTable = nullptr;
 
 	/* Hit location of a block. */
-	FVector HitLocation; 
+	FVector HitLocation;
 
 	/* View type. */
 	ViewState CurrentView;
+
+	/* Unique worldCreater */
+	AWorldCreater* Creater;
 
 	/* PlayerCharacter parameters. */
 	float healthValue;
@@ -126,4 +151,9 @@ private:
 	/* Collection sphere for auto pickup. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USphereComponent* CollectionSphere;
+
+	UPROPERTY(VisibleAnywhere)
+		class USphereComponent* CreateUndergroundSphere;
+
+	class USphereComponent* CreateMapSphere;
 };

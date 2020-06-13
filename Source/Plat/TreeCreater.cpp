@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "TreeCreater.h"
 #include "blocks/BasicBlock.h"
 
@@ -20,7 +19,7 @@ ATreeCreater::ATreeCreater() {
 }
 
 void ATreeCreater::BeginPlay() {
-	Super::BeginPlay();	
+	Super::BeginPlay();
 	PlantTree();
 }
 
@@ -90,7 +89,6 @@ void ATreeCreater::CreateLeaf() {
 			tempVec, FRotator::ZeroRotator);
 		tempVec.Y += 100.f;
 	}
-
 
 	// 2 & 3.
 	tempVec = CurrentLocation;

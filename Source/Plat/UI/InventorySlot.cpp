@@ -18,6 +18,7 @@ UInventorySlot::UInventorySlot(const FObjectInitializer& ObjectInitializer)
 
 void UInventorySlot::NativeConstruct() {
 	Super::NativeConstruct();
+	PlayerInventory = IController->PlayerInventoryWidget;
 	SetThisTextureToThumbnail(CurrentTexture);
 }
 
@@ -90,7 +91,6 @@ void UInventorySlot::NativeOnDragDetected(const FGeometry& InGeometry, const FPo
 		OutOperation = oper;
 
 		if (DragImageWidget) {
-			//DragImageWidget->ItemData.Thumbnail = this->ItemData.Thumbnail;
 			DragImageWidget->CurrentTexture = this->CurrentTexture;
 			DragImageWidget->Allocatable = false;
 			oper->DefaultDragVisual = DragImageWidget;
@@ -102,33 +102,25 @@ bool UInventorySlot::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEv
 	Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 	UDragDropSlot* oper = Cast<UDragDropSlot>(InOperation);
 
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, TEXT("Drag : end"));
+	int from = oper->From->Index;
+	int to = this->Index;
 
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
-		FString::Printf(TEXT("Drag start at %d index"), oper->From->Index));
-
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
-		FString::Printf(TEXT("Drag end at %d index"), this->Index));
-
-	int slot1 = oper->From->Index;
-	int slot2 = this->Index;
-	int usingIndex = IController->ScreenUIWidget->GetUsingIndex();
-
-	if (!IController->PlayerInventoryWidget->SwapSlot(slot1, slot2))
+	// Can't put in a item to the output slot.
+	if (to == Output)
 		return false;
 
-	// If there are any swap slots that bind with quick slot, refresh it.
-	if ((QuickStart <= slot1 && slot1 <= QuickEnd) ||
-		(QuickStart <= slot2 && slot2 <= QuickEnd)) {
-		IController->PlayerInventoryWidget->RefreshQuickSlots();
+	NormalSlotSwap(from, to);
+
+	// Get into the recipe slot.
+	if ((RecipeStart <= to && to <= RecipeEnd) ||
+		(RecipeStart <= from && from <= RecipeEnd)) {
+		UpdateRecipeSlots();
+		PlayerInventory->AssembleRecipe();
 	}
 
-	// If player use a item in the swapped slot, unequip the weapon.
-	if (slot1 == usingIndex + QuickStart || slot2 == usingIndex + QuickStart) {
-		if (IPlayer->GetWeapon() != nullptr) {
-			IController->ScreenUIWidget->SetUsingIndex(-1);
-			IPlayer->DisarmWeapon();
-		}
+	// Take out from output slot.
+	else if (from == Output) {
+		DragOutFromOutputSlot();
 	}
 
 	return true;
@@ -160,36 +152,90 @@ FReply UInventorySlot::NativeOnMouseButtonUp(const FGeometry& InGeometry, const 
 	return reply.NativeReply;
 }
 
+bool UInventorySlot::NormalSlotSwap(int leftIndex, int rightIndex) {
+	int usingIndex = IController->ScreenUIWidget->GetUsingIndex();
+
+	if (!IController->PlayerInventoryWidget->SwapSlot(leftIndex, rightIndex))
+		return false;
+
+	// If there are any swap slots that bind with quick slot, refresh it.
+	if ((QuickStart <= leftIndex && leftIndex <= QuickEnd) ||
+		(QuickStart <= rightIndex && rightIndex <= QuickEnd)) {
+		IController->PlayerInventoryWidget->RefreshQuickSlots();
+	}
+
+	// If player use a item in the swapped slot, disarm the weapon.
+	if (leftIndex == usingIndex + QuickStart || rightIndex == usingIndex + QuickStart) {
+		if (IPlayer->GetWeapon() != nullptr) {
+			IController->ScreenUIWidget->SetUsingIndex(-1);
+			IPlayer->DisarmWeapon();
+		}
+	}
+
+	return true;
+}
+
+void UInventorySlot::UpdateRecipeSlots() {
+	int recipeIndex = RecipeStart;
+
+	for (int i = RecipeStart; i <= RecipeEnd; i++) {
+		PlayerInventory->RecipeSlotIDs[i - RecipeStart] = PlayerInventory->Slots[i]->ItemID;
+		PlayerInventory->RecipeSlotFlags[i - RecipeStart] = 1;
+
+		if (PlayerInventory->RecipeSlotIDs[i - RecipeStart].IsEqual("None")) {
+			PlayerInventory->RecipeSlotFlags[i - RecipeStart] = 0;
+		}
+	}
+}
+
+void UInventorySlot::DragOutFromOutputSlot() {
+	for (int i = RecipeStart; i < RecipeStart + 9; i++) {
+		if (!IController->PlayerInventoryWidget->Slots[i]->ItemID.IsEqual("None")) {
+			IController->PlayerInventoryWidget->Slots[i]->Count--;
+			IController->PlayerInventoryWidget->Slots[i]->Refresh();
+		}
+	}
+}
+
 bool UInventorySlot::SetNewItem(FName ID) {
 	auto IState = Cast<ASandBoxState>(GetWorld()->GetGameState());
 	FBaseItemData* BaseData = IState->BaseDB->FindRow<FBaseItemData>(ID, "");
 
-	if (BaseData == nullptr) {
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-			FString::Printf(TEXT("InValid ID..")));
-		return false;
+	// Set empty slot.
+	if (ID.IsEqual("None")) {
+		this->Clear();
 	}
 
-	switch (BaseData->ItemType) {
-	case EItemType::EQUIPMENT:
-		ItemType = EItemType::EQUIPMENT;
-		break;
+	// Set valid item.
+	else {
+		if (BaseData == nullptr) {
+			GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+				FString::Printf(TEXT("InValid ID..")));
+			return false;
+		}
 
-	case EItemType::BLOCK:
-		ItemType = EItemType::BLOCK;
-		break;
+		switch (BaseData->ItemType) {
+		case EItemType::EQUIPMENT:
+			ItemType = EItemType::EQUIPMENT;
+			break;
 
-	case EItemType::NONE:
+		case EItemType::BLOCK:
+			ItemType = EItemType::BLOCK;
+			break;
 
-	default:
-		return false;
+		case EItemType::NONE:
+
+		default:
+			return false;
+		}
+
+		CurrentTexture = BaseData->Thumbnail;
+		ItemName = BaseData->ItemName.ToString();
+		ItemID = ID;
+		Allocatable = false;
+		Count = 1;
 	}
 
-	CurrentTexture = BaseData->Thumbnail;
-	ItemName = BaseData->ItemName.ToString();
-	ItemID = ID;
-	Allocatable = false;
-	Count = 1;
 	Refresh();
 
 	return true;

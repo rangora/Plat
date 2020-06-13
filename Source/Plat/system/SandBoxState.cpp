@@ -2,6 +2,7 @@
 
 #include "SandBoxState.h"
 #include "WorldCreater.h"
+#include "item/CRecipeData.h"
 #include "avatar/Avatar.h"
 #include "system/AvatarController.h"
 
@@ -9,18 +10,27 @@ ASandBoxState::ASandBoxState() {
 	static ConstructorHelpers::FObjectFinder<UDataTable> BP_ItemDB(TEXT("/Game/Data/BaseData.BaseData"));
 	static ConstructorHelpers::FObjectFinder<UDataTable> BP_EquipmentDB(TEXT("/Game/Data/EquipmentData.EquipmentData"));
 	static ConstructorHelpers::FObjectFinder<UDataTable> BP_BlockDB(TEXT("/Game/Data/BlockData.BlockData"));
+	static ConstructorHelpers::FObjectFinder<UDataTable> BP_RecipeDB(TEXT("/Game/Data/RecipeData.RecipeData"));
+
 	BaseDB = BP_ItemDB.Object;
 	EquipmentDB = BP_EquipmentDB.Object;
 	BlockDB = BP_BlockDB.Object;
+	RecipeDB = BP_RecipeDB.Object;
+
+	// Init Recipe table.
+	FString Contexts;
+	RecipeDB->GetAllRows<FRecipeData>(Contexts, RecipeTable);
 }
 
 void ASandBoxState::BeginPlay() {
 	Super::BeginPlay();
 
-	auto WorldCreaterClass = AWorldCreater::StaticClass();
-	
 	WorldCreater = GetWorld()->SpawnActor<AWorldCreater>(AWorldCreater::StaticClass(),
-		FVector(100.f, 100.f, 100.f), FRotator::ZeroRotator);
+		FVector::ZeroVector, FRotator::ZeroRotator);
+}
+
+AWorldCreater* ASandBoxState::GetWorldCreater() {
+	return WorldCreater;
 }
 
 UDataTable* ASandBoxState::GetBaseDB() const {
@@ -35,41 +45,13 @@ UDataTable* ASandBoxState::GetEquipmentDB() const {
 	return EquipmentDB;
 }
 
-TArray<BlockData>* ASandBoxState::GetBlockTable(FName ItemID) {
-	int id = FCString::Atoi(*ItemID.ToString());
+TArray<FRecipeData*> ASandBoxState::GetItemRecipes(FString StringBits) {
+	TArray<FRecipeData*> Nominated;
 
-	switch (id) {
-	case 1:
-		return &DirtTable;
-	case 2:
-		return &GrassTable;
-	case 3:
-		return &TreeTable;
-	case 5:
-		return &RockTable;
-	default:
-		break;
+	for (auto iter : RecipeTable) {
+		if (iter->SlotBits.Equals(StringBits))
+			Nominated.Add(iter);
 	}
 
-	return nullptr;
+	return Nominated;
 }
-
-AActor* ASandBoxState::GetMetaBlock(FName ItemID) {
-	int id = FCString::Atoi(*ItemID.ToString());
-
-	switch (id) {
-	case 1:
-		return WorldCreater->Dirt;
-	case 2:
-		return WorldCreater->Grass;
-	case 3:
-		return WorldCreater->Tree;
-	case 5:
-		return WorldCreater->Rock;
-	default:
-		break;
-	}
-
-	return nullptr;
-}
-

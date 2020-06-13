@@ -65,6 +65,10 @@ void AAvatarController::SetupInputComponent() {
 	InputComponent->BindAction(TEXT("Quick2"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
 	InputComponent->BindAction(TEXT("Quick3"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
 	InputComponent->BindAction(TEXT("Quick4"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
+	InputComponent->BindAction(TEXT("Quick5"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
+	InputComponent->BindAction(TEXT("Quick6"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
+	InputComponent->BindAction(TEXT("Quick7"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
+	InputComponent->BindAction(TEXT("Quick8"), EInputEvent::IE_Pressed, this, &AAvatarController::EquipQuickSlot);
 }
 
 void AAvatarController::SwitchIventory() {
@@ -112,6 +116,22 @@ void AAvatarController::EquipQuickSlot(FKey Key) {
 	else if (Input.Equals("Four")) {
 		ItemName = ScreenUIWidget->QuickSlots[3]->LinkedSlot->ItemName;
 		inputIndex = 3;
+	}
+	else if (Input.Equals("Five")) {
+		ItemName = ScreenUIWidget->QuickSlots[4]->LinkedSlot->ItemName;
+		inputIndex = 4;
+	}
+	else if (Input.Equals("Six")) {
+		ItemName = ScreenUIWidget->QuickSlots[5]->LinkedSlot->ItemName;
+		inputIndex = 5;
+	}
+	else if (Input.Equals("Seven")) {
+		ItemName = ScreenUIWidget->QuickSlots[6]->LinkedSlot->ItemName;
+		inputIndex = 6;
+	}
+	else if (Input.Equals("Eight")) {
+		ItemName = ScreenUIWidget->QuickSlots[7]->LinkedSlot->ItemName;
+		inputIndex = 7;
 	}
 
 	// If quickSlot of input index is empty.
@@ -177,8 +197,6 @@ void AAvatarController::CreateInventory() {
 	PlayerInventoryWidget->InitInventory();
 	ScreenUIWidget->InitQuickSlots();
 
-	ScreenUIWidget->LinkSlot(0, PlayerInventoryWidget->Slots[12]);
-	ScreenUIWidget->LinkSlot(1, PlayerInventoryWidget->Slots[13]);
-	ScreenUIWidget->LinkSlot(2, PlayerInventoryWidget->Slots[14]);
-	ScreenUIWidget->LinkSlot(3, PlayerInventoryWidget->Slots[15]);
+	for (int i = 0; i < QuickSlotSize; i++)
+		ScreenUIWidget->LinkSlot(i, PlayerInventoryWidget->Slots[FirstLinkedIndex + i]);;
 }

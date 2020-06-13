@@ -53,4 +53,7 @@ public:
 		UPlayerInventory* PlayerInventoryWidget;
 
 	bool IsInventoryOpen = false;
+
+private:
+	enum SlotSize { QuickSlotSize = 8, FirstLinkedIndex = 24 }; // Æó±¸°£
 };

@@ -24,8 +24,6 @@ void AAutoPickup::Tick(float DeltaTime) {
 	AddActorLocalRotation(FRotator(0.f, rotateSpeed * DeltaTime, 0.f));
 }
 
-
-
 void AAutoPickup::Collect_Implementation(APlayerController* Controller) {
 	float speed = 0.03;
 
@@ -36,7 +34,6 @@ void AAutoPickup::Collect_Implementation(APlayerController* Controller) {
 	FVector Direction = PlayerLocation - GetTransform().GetLocation();
 	FVector NewLocation = GetTransform().GetLocation() + (Direction * speed);
 
-	
 	bIsCollecting = true;
 	PickupMesh->SetEnableGravity(false);
 

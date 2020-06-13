@@ -31,7 +31,7 @@ public:
 		TArray<class UQuickSlot*> QuickSlots;
 
 private:
-	enum { QuickSlotSize = 4 };
+	//enum { QuickSlotSize = 8 };
 
 	int SlotSize;
 	int usingIndex;

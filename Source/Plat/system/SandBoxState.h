@@ -14,8 +14,8 @@
  */
 
 typedef TPair<int, FString> BlockData;
-
 class AWorldCreater;
+struct FRecipeData;
 
 UCLASS()
 class PLAT_API ASandBoxState : public AGameStateBase {
@@ -26,15 +26,12 @@ public:
 
 	virtual void BeginPlay() override;
 
+	AWorldCreater* GetWorldCreater();
 	UDataTable* GetBaseDB() const;
 	UDataTable* GetBlockDB() const;
 	UDataTable* GetEquipmentDB() const;
 
-	TArray<BlockData>* GetBlockTable(FName ItemID);
-	AActor* GetMetaBlock(FName ItemID);
-
-	/* Using Item */
-	bool UseBlockItem(ACharacter* Player, FName ItemID, FString BlockName);
+	TArray<FRecipeData*> GetItemRecipes(FString StringBits);
 
 public:
 	UPROPERTY(EditDefaultsOnly)
@@ -46,12 +43,11 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 		class UDataTable* BlockDB;
 
+	UPROPERTY(EditDefaultsOnly)
+		class UDataTable* RecipeDB;
 
-	TArray<BlockData> DirtTable;
-	TArray<BlockData> GrassTable;
-	TArray<BlockData> RockTable;
-	TArray<BlockData> TreeTable;
-	TArray<BlockData> leafTable;
+	TArray<FRecipeData*> RecipeTable;
 
-	AWorldCreater* WorldCreater;
+	UPROPERTY()
+		AWorldCreater* WorldCreater;
 };

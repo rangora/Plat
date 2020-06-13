@@ -1,8 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "CrackingMesh.h"
-
 
 ACrackingMesh::ACrackingMesh() {
 	PrimaryActorTick.bCanEverTick = false;
@@ -17,4 +15,3 @@ ACrackingMesh::ACrackingMesh() {
 
 	RootComponent = Crack;
 }
-

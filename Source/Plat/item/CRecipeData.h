@@ -4,26 +4,19 @@
 
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
-#include "ItemEnumType.h"
-#include "CEquipmentData.generated.h"
+#include "CRecipeData.generated.h"
 
 USTRUCT(BlueprintType)
-struct FEquipmentData : public FTableRowBase {
+struct FRecipeData : public FTableRowBase {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FName ItemID;
+		FString SlotBits;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		EMatch Match;
+		FString ItemIDs;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FName AdventageTarget;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float AdDamage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Damage;
+		FName OutputItem;
 };

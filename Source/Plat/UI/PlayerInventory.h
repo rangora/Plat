@@ -18,7 +18,6 @@ class PLAT_API UPlayerInventory : public UBaseUI {
 	GENERATED_BODY()
 
 public:
-
 	UPlayerInventory(const FObjectInitializer& ObjectInitializer);
 
 	virtual void NativeConstruct() override;
@@ -26,7 +25,9 @@ public:
 
 	int FindItemInSlots(FName ItemID);
 
+	/* Slot interaction. */
 	bool SwapSlot(int leftIndex, int rightIndex);
+	void AssembleRecipe();
 
 	UFUNCTION(BlueprintImplementableEvent)
 		void InitInventory();
@@ -46,6 +47,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		int SlotSize;
 
-private:
-	enum { InventorySlotSize = 16 };
+	/* Recipe relation. */
+	int RecipeSlotFlags[9] = { 0, };
+	TArray<FName> RecipeSlotIDs;
 };

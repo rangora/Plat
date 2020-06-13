@@ -4,15 +4,8 @@
 
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
+#include "ItemEnumType.h"
 #include "CBaseItemData.generated.h"
-
-UENUM(BlueprintType)
-enum class EItemType : uint8 {
-	NONE		UMETA(DisplayName = "None"),
-	EQUIPMENT	UMETA(DisplayName = "Equipment"),
-	BLOCK		UMETA(DisplayName = "Block"),
-	FOOD		UMETA(DisplayName = "Food")
-};
 
 USTRUCT(BlueprintType)
 struct FBaseItemData : public FTableRowBase {

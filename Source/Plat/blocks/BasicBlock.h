@@ -35,13 +35,16 @@ public:
 	/* If is equal with 'Match' int weapon class, this block get huge damMaterialsage. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		EMatch Match;
-	
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		class UInstancedStaticMeshComponent* MeshInstances;
 
-	/* Mesh instance value. */
-	float maxHP;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float maxHP;
+
 	float currentHP;
+
+	/* Mesh instance value. */
 	size_t instanceIndex;
 	FVector BlockLocation;
 	ACrackingMesh* CrackingEffect = nullptr;
