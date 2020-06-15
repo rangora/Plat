@@ -14,6 +14,7 @@ class PLAT_API AWorldMap : public AActor {
 
 public:
 	AWorldMap();
+	~AWorldMap();
 
 	virtual void BeginPlay() override;
 
@@ -25,7 +26,7 @@ public:
 	float octave(int x, int y, int numOfOctaves, float noiseScale);
 
 	void CreateTerrain();
-	void CreateTerrainSlice(FVector Where, int pivotIndex);
+	void CreateTerrainSlice(int pivotIndex);
 	bool ProbDistributor(float prob);
 	void CreateTree(FVector Vec);
 
@@ -41,9 +42,13 @@ public:
 	void RunCreaterTask(AWorldMap* aMap);
 	void RunCreaterTaskMain(AWorldMap* aMap);
 
+	/* Clean */
+	void Clear();
+
 private:
 	void CreateLog(FVector Vec);
 	void CreateLeaf(FVector Vec);
+
 
 public:
 	UStaticMeshComponent* CollisionMesh;

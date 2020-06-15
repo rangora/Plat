@@ -4,6 +4,7 @@
 #include "TreeCreater.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Math/TransformNonVectorized.h"
+#include <time.h>
 #include "system/SandBoxState.h"
 
 void AWorldCreater::Init() {
@@ -47,28 +48,49 @@ void AWorldCreater::AutoMapLoader(FVector PlayerVec, TArray<AWorldMap*> NearMaps
 				Map->RemoveCollisionMesh();
 
 				auto aTask = new MapCreateTask(Map);
+
+				// TEST
+				clock_t start, end;
+				double result;
+
+				start = clock();
 				aTask->DoWorkMain();
+				end = clock();
+				result = (double)(end - start);
+
+				GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
+					FString::Printf(TEXT("time:%f"), (result / CLOCKS_PER_SEC)));
 
 				Maps.Add(Map);
 				delete aTask;
 			}
 		}
-
-			for (auto ValidMap : Maps) {
-				float threshold = 22000.f;
+		
+		for (auto ValidMap : Maps) {
 				FVector ValidMapVector = ValidMap->MapLocation;
 			
 				float MapDistance = GetDistance(ValidMapVector, PlayerVec);
 
 
-				if (FMath::Abs(MapDistance) >= threshold) {
+				if (FMath::Abs(MapDistance) >= DELETEDISTANCE) {
 					Maps.Remove(ValidMap);
-					ValidMap->Destroy();
+
+					if (ValidMap->IsValidLowLevel()) {
+						ValidMap->Clear();
+						ValidMap->Destroy();
+						ValidMap = nullptr;
+						GetWorld()->ForceGarbageCollection();
+
+						GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
+							FString::Printf(TEXT("Map Delete..")));
+					}
+
+					
+
 					SpawnAndSetMap(ValidMapVector, TileState::COLIISION);
 					FPlatformProcess::Sleep(0.01f);
 
-					GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red,
-						FString::Printf(TEXT("Map Delete..")));
+					
 				}
 			}
 		
@@ -82,7 +104,8 @@ void AWorldCreater::AutoUndergroundCreater(TArray<APartial*> Partials) {
 		for (auto Partial : Partials) {
 			int mapIndex = GetMapIndex(Partial->GetActorLocation());
 
-			Maps[mapIndex]->CreateUnderground(Partial);
+			if(mapIndex >= 0)
+				Maps[mapIndex]->CreateUnderground(Partial);
 		}
 	}
 }
@@ -121,7 +144,7 @@ int AWorldCreater::GetMapIndex(FVector Vec) {
 	int index = -1;
 	FVector Input = { FMath::FloorToFloat((Vec.X / mapSize)) * mapSize,
 					  FMath::FloorToFloat((Vec.Y / mapSize)) * mapSize,
-					  FMath::FloorToFloat((Vec.Z / mapSize)) * mapSize };
+					  0.f };
 
 	for (int i = 0; i < Maps.Num(); i++) {
 		if (Maps[i]->MapLocation.Equals(Input)) {

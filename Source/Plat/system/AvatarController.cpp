@@ -52,7 +52,7 @@ void AAvatarController::BeginPlay() {
 
 	if (!IsValid(ScreenUIWidget)) {
 		ScreenUIWidget = CreateWidget<UScreenUI>(this, ScreenUIClass);
-		ScreenUIWidget->AddToViewport();
+		//ScreenUIWidget->AddToViewport();
 	}
 	CreateInventory();
 	SetInputMode(FInputModeGameOnly());

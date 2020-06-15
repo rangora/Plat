@@ -23,6 +23,12 @@ ABasicBlock::ABasicBlock() {
 	currentHP = maxHP;
 }
 
+ABasicBlock::~ABasicBlock() {
+	if (MeshInstances->IsValidLowLevel()) {
+		MeshInstances->ConditionalBeginDestroy();
+	}
+}
+
 void ABasicBlock::DropItem(FVector DropLocation) {
 	if (Name.Equals("BasicBlock"))
 		return;

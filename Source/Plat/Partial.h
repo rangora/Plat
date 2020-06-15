@@ -15,12 +15,15 @@ class PLAT_API APartial : public AActor {
 
 public:
 	APartial();
+	~APartial();
 
 	virtual void BeginPlay() override;
 
 	TArray<BlockData>* GetBlockTable(FName BlockID);
 	ABasicBlock* GetBlock(FName BlockID);
 	int* GetBlockCount(FName BlockID);
+
+	void Clean();
 
 public:
 	static size_t DirtAmount;

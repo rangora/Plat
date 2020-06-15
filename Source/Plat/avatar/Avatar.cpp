@@ -63,8 +63,8 @@ AAvatar::AAvatar() {
 
 	CreateMapSphere = CreateDefaultSubobject<USphereComponent>(TEXT("LoadMapSphere"));
 	CreateMapSphere->SetupAttachment(RootComponent);
-	CreateMapSphere->SetRelativeLocation(FVector{0.f, 0.f, 5000.f});
-	CreateMapSphere->SetSphereRadius(3500.f);
+	CreateMapSphere->SetRelativeLocation(FVector{0.f, 0.f, 3300.f});
+	CreateMapSphere->SetSphereRadius(2500.f);
 
 	// jump
 	GetCharacterMovement()->JumpZVelocity = 600.0f;
@@ -577,9 +577,6 @@ void AAvatar::ViewChange() {
 		// Shadow off.
 		GetMesh()->bCastDynamicShadow = false;
 		GetMesh()->CastShadow = false;
-
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green,
-			FString::Printf(TEXT("First : %s"), *(SpringArm->GetRelativeLocation().ToString())));
 
 		CurrentView = ViewState::FIRSTPERSON;
 		break;

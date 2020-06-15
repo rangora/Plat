@@ -16,10 +16,9 @@ AWorldMap::AWorldMap() {
 
 	CollisionMesh->SetRelativeScale3D(FVector(100.f, 100.f, 100.f));
 	CollisionMesh->SetCollisionProfileName(TEXT("BlockQuery"));
+}
 
-	// thread
-	//pMapWorker = new FMapWorker();
-	//pThread = FRunnableThread::Create(FMapWorker, TEXT("Worker"), 0);
+AWorldMap::~AWorldMap() {
 }
 
 void AWorldMap::BeginPlay() {
@@ -127,10 +126,7 @@ void AWorldMap::CreateTerrain() {
 	for (int x = 0; x < 10; x++) {
 		for (int y = 0; y < 10; y++) {
 
-			CreateTerrainSlice(FVector{
-				CurrentSlice.X + 1000.f * x,
-				CurrentSlice.Y + 1000.f * y,
-				CurrentSlice.Z + 6000.f }, cnt);
+			CreateTerrainSlice(cnt);
 			cnt += 4;
 		}
 	}
@@ -237,11 +233,11 @@ void AWorldMap::CreateUnderground(APartial* NearPartials) {
 	}
 } 
 
-void AWorldMap::CreateTerrainSlice(FVector Where, int pivotIndex) {
+void AWorldMap::CreateTerrainSlice(int pivotIndex) {
 	APartial* CurrentPartial = SurfaceSlice[pivotIndex];
 	ABasicBlock* CurrentBlock = nullptr;
 	TArray<BlockData>* CurrentTable = nullptr;
-	Where = CurrentPartial->GetActorLocation();
+	FVector Where = CurrentPartial->GetActorLocation();
 
 	float threshold = 11.0f;
 	float noiseScale = 20.f;
@@ -376,6 +372,17 @@ void AWorldMap::RunCreaterTaskMain(AWorldMap* aMap) {
 	
 	Task->DoWorkMain();
 	delete Task;
+}
+
+void AWorldMap::Clear() {
+	for (auto iter : SurfaceSlice) {
+		iter->Clean();
+		iter->ConditionalBeginDestroy();
+	}
+	for (auto iter : UndergroundSlice) {
+		iter->Clean();
+		iter->ConditionalBeginDestroy();
+	}
 }
 
 void AWorldMap::CreateLog(FVector Vec) {

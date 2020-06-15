@@ -26,13 +26,17 @@ class PLAT_API AWorldCreater : public AActor {
 	};
 
 	enum {
+		/* Constants about map crater. */
 		X = 100,
 		Y = 100,
 
 		TOPZ = 100,
 		JOINT = 60,
 
-		MAXSIZE = 100
+		MAXSIZE = 100,
+
+		/* Delete map threshold. */
+		DELETEDISTANCE = 22000
 	};
 
 public:

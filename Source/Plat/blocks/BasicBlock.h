@@ -20,6 +20,7 @@ class PLAT_API ABasicBlock : public ABlock {
 
 public:
 	ABasicBlock();
+	~ABasicBlock();
 
 	void DropItem(FVector DropLocation);
 	void Reset();

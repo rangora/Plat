@@ -16,6 +16,9 @@ APartial::APartial() {
 	CollisionMesh->SetCollisionProfileName(TEXT("BlockQuery"));
 }
 
+APartial::~APartial() {
+}
+
 void APartial::BeginPlay() {
 	Super::BeginPlay();
 
@@ -163,4 +166,28 @@ int* APartial::GetBlockCount(FName BlockID) {
 	}
 
 	return TargetCount;
+}
+
+void APartial::Clean() {
+	if (Dirt->IsValidLowLevel()) {
+		Dirt->Destroy();
+	}
+	if (Grass->IsValidLowLevel()) {
+		Grass->Destroy();
+	}
+	if (Rock->IsValidLowLevel()) {
+		Rock->Destroy();
+	}
+	if (Tree->IsValidLowLevel()) {
+		Tree->Destroy();
+	}
+	if (Lumber->IsValidLowLevel()) {
+		Lumber->Destroy();
+	}
+	if (Leaf->IsValidLowLevel()) {
+		Leaf->Destroy();
+	}
+	if (Coal->IsValidLowLevel()) {
+		Coal->Destroy();
+	}
 }
