@@ -6,7 +6,7 @@
 
 ## 1. Overview
 
-__Plat is a minecraft clone project using unreal engine. __
+__Plat is a minecraft clone project using unreal engine.__
 
 Plat focus on how to handle a huge world to make players feel like they belong to the infinite world. Also, It has other features to satisfy seems like minecraft. These are describe `features` section.
 
