@@ -75,6 +75,7 @@ public:
 
 private:
 	int _param[512];
+	int _randSeed;
 	float mapLoadThreshold;
 	float mapSize;
 	TileState TileMap[MAXSIZE][MAXSIZE];

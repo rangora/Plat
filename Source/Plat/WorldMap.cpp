@@ -114,7 +114,7 @@ float AWorldMap::octave(int x, int y, int numOfOctaves, float noiseScale) {
 
 	for (int i = 0; i < numOfOctaves; i++) {
 		sum += noise(x / noiseScale, y / noiseScale) * amplitude;
-		amplitude *= 2.0f;
+		amplitude *= AMPLITUDE;
 	}
 	return sum;
 }
@@ -153,9 +153,6 @@ void AWorldMap::CreateUnderground(APartial* NearPartials) {
 	if (UndergroundSlice[sliceIndex]->bAllocated == false) {
 		UndergroundSlice[sliceIndex]->bAllocated = true;
 
-
-		float threshold = 25.f;
-		float noiseScale = 18.f; 
 		float density{};
 
 		int* blockCount = nullptr;
@@ -177,13 +174,13 @@ void AWorldMap::CreateUnderground(APartial* NearPartials) {
 				for (int z = 10 - 1; z >= 0; z--) {
 						
 						
-					float xnoise = FMath::Abs(octave(_seedZ, _seedY, 6, noiseScale));
-					float ynoise = FMath::Abs(octave(_seedX, _seedY, 6, noiseScale));
-					float znoise = FMath::Abs(octave(_seedX, _seedZ, 6, noiseScale));
+					float xnoise = FMath::Abs(octave(_seedZ, _seedY, UOCATAVES, UNOISESCALE));
+					float ynoise = FMath::Abs(octave(_seedX, _seedY, UOCATAVES, UNOISESCALE));
+					float znoise = FMath::Abs(octave(_seedX, _seedZ, UOCATAVES, UNOISESCALE));
 
 					density = xnoise + ynoise + znoise;
 
-					if (density > threshold) {
+					if (density > UTHRESHOLD) {
 
 						if ((Where.Z + z * 100.f) == (5900.f)) {
 							CurrentBlock = CurrentPartial->Grass;
@@ -239,8 +236,6 @@ void AWorldMap::CreateTerrainSlice(int pivotIndex) {
 	TArray<BlockData>* CurrentTable = nullptr;
 	FVector Where = CurrentPartial->GetActorLocation();
 
-	float threshold = 11.0f;
-	float noiseScale = 20.f;
 	float density{};
 	int sliceIndex{};
 	int preZ{};
@@ -253,13 +248,18 @@ void AWorldMap::CreateTerrainSlice(int pivotIndex) {
 				sliceIndex = pivotIndex + z / 10;
 				CurrentPartial = SurfaceSlice[sliceIndex];
 
-				float xnoise = octave(Where.Z / 100.f + z, Where.Y / 100.f + y, 4, noiseScale);
-				float ynoise = octave(Where.X / 100.f + x, Where.Y / 100.f + y, 4, noiseScale);
-				float znoise = octave(Where.X / 100.f + x, Where.Z / 100.f + z, 4, noiseScale);
-
+				float xnoise = octave(Where.Z / 100.f + z, Where.Y / 100.f + y, SOCTAVES, SNOISESCALE);
+				float ynoise = octave(Where.X / 100.f + x, Where.Y / 100.f + y, SOCTAVES, SNOISESCALE);
+				float znoise = octave(Where.X / 100.f + x, Where.Z / 100.f + z, SOCTAVES, SNOISESCALE);
 				density = xnoise + ynoise + znoise + z;
+				
+				// TEST
+				/*float xnoise = FMath::PerlinNoise2D(FVector2D{ (Where.Z / 100.f + z) / 20.f, (Where.Y / 100.f + y) / 20.f}) * 12.f;
+				float ynoise = FMath::PerlinNoise2D(FVector2D{ (Where.X / 100.f + x) / 20.f, (Where.Y / 100.f + y) / 20.f}) * 12.f;
+				float znoise = FMath::PerlinNoise2D(FVector2D{ (Where.X / 100.f + x) / 20.f, (Where.Z / 100.f + z) / 20.f}) * 12.f;
+				*/
 
-				if (density < threshold) {
+				if (density < STHRESHOLD) {
 					FVector Local{ Where.X + x * 100.f, Where.Y + y * 100.f, Where.Z + z * 100.f };
 					currentZ = z * 100;
 					
@@ -376,11 +376,11 @@ void AWorldMap::RunCreaterTaskMain(AWorldMap* aMap) {
 
 void AWorldMap::Clear() {
 	for (auto iter : SurfaceSlice) {
-		iter->Clean();
+		//iter->Clean();
 		iter->ConditionalBeginDestroy();
 	}
 	for (auto iter : UndergroundSlice) {
-		iter->Clean();
+		//iter->Clean();
 		iter->ConditionalBeginDestroy();
 	}
 }

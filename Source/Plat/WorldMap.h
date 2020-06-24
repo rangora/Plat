@@ -65,6 +65,7 @@ public:
 	bool bIsInit = false;
 
 private:
+	/* Constants for map creating. */
 	enum {
 		TOPZ = 100,
 		JOINT = 60,
@@ -72,6 +73,22 @@ private:
 
 		X = 100,
 		Y = 100
+	};
+
+	/* Constants for perlin noise. */
+	enum {
+		// Common value.
+		AMPLITUDE = 2,
+
+		// Values about surface.
+		STHRESHOLD = 11,
+		SNOISESCALE = 20,
+		SOCTAVES = 4,
+		
+		// Values about underground.
+		UTHRESHOLD = 25,
+		UNOISESCALE = 18,
+		UOCATAVES = 6
 	};
 
 	int coalNum = 0;

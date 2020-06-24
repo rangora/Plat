@@ -15,6 +15,14 @@ void AWorldCreater::Init() {
 		}
 	}
 
+	// Init rand.
+	if (_randSeed != -1) {
+		FMath::SRandInit(_randSeed);
+	}
+	for (int i = 0; i < 512; i++) {
+		_param[i] = FMath::RandRange(1, 255);
+	}
+
 	FVector StartMapVector{ 50000.f, 50000.f, 0.f };
 	SpawnAndSetMap(StartMapVector, TileState::MAPCREATE);
 
@@ -213,17 +221,10 @@ float AWorldCreater::GetDistance(FVector LeftVec, FVector RightVec) {
 }
 
 AWorldCreater::AWorldCreater() {
-	UE_LOG(Plat, Log, TEXT("WorldCreater Constructor"));
-
 	PrimaryActorTick.bCanEverTick = false;
 	mapLoadThreshold = 7000.f;
 	mapSize = 10000.f;
-
-	// Set random value.
-	for (int i = 0; i < 512; i++) {
-		_param[i] = FMath::RandRange(1, 255);
-	}
-	UE_LOG(Plat, Log, TEXT("WorldCreater Constructor Out"));
+	_randSeed = -1;
 }
 
 void AWorldCreater::BeginPlay() {
