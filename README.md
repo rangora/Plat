@@ -1,6 +1,6 @@
 # Plat
 
-![null](img\main.png)
+![null](img/main.png)
 
 
 
