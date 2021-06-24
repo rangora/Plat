@@ -1,0 +1,17 @@
+## visual studio
+.vs
+Plat.sln
+
+## unreal
+Binaries
+config
+Intermediate
+Plugins
+Saved
+Build
+
+## asset
+Content/Collections
+Content/Developers
+Content/resources
+
